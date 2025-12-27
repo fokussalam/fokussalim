@@ -1,5 +1,5 @@
 import { MapPin, Phone, Mail, Facebook, Instagram, Youtube } from "lucide-react";
-import logoTamanQuran from "@/assets/logo-taman-quran.jpg";
+import logoTamanQuran from "@/assets/logo-taman-quran.png";
 
 const Footer = () => {
   const quickLinks = [
