@@ -1,4 +1,5 @@
-import { BookOpen, MapPin, Phone, Mail, Facebook, Instagram, Youtube } from "lucide-react";
+import { MapPin, Phone, Mail, Facebook, Instagram, Youtube } from "lucide-react";
+import logoTamanQuran from "@/assets/logo-taman-quran.jpg";
 
 const Footer = () => {
   const quickLinks = [
@@ -24,12 +25,14 @@ const Footer = () => {
           {/* Brand */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-primary-foreground" />
-              </div>
+              <img 
+                src={logoTamanQuran} 
+                alt="Logo Taman Qur'an" 
+                className="h-14 w-auto object-contain"
+              />
               <div>
                 <h3 className="font-bold text-xl">Taman Qur'an</h3>
-                <p className="text-sm text-primary-foreground/70">Membentuk Generasi Qur'ani</p>
+                <p className="text-sm text-primary-foreground/70">Tanamkan Iman, Tanamkan Al Qur'an</p>
               </div>
             </div>
             <p className="text-primary-foreground/80 text-sm leading-relaxed mb-6">
