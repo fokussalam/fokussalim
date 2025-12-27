@@ -1,13 +1,40 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import Navbar from "@/components/layout/Navbar";
+import HeroSection from "@/components/sections/HeroSection";
+import AboutSection from "@/components/sections/AboutSection";
+import ProgramsSection from "@/components/sections/ProgramsSection";
+import AnnouncementsSection from "@/components/sections/AnnouncementsSection";
+import ContactSection from "@/components/sections/ContactSection";
+import Footer from "@/components/layout/Footer";
+import { Helmet } from "react-helmet-async";
 
 const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <>
+      <Helmet>
+        <title>Taman Qur'an - Lembaga Pendidikan Al-Qur'an | Tahsin, Tahfidz & Akhlak</title>
+        <meta
+          name="description"
+          content="Taman Qur'an adalah lembaga pendidikan Al-Qur'an terpercaya dengan program Tahsin, Tahfidz, dan pembinaan Akhlak untuk membentuk generasi Qur'ani yang berakhlak mulia."
+        />
+        <meta
+          name="keywords"
+          content="Taman Quran, belajar Al-Quran, tahsin, tahfidz, hafalan quran, pendidikan islam"
+        />
+        <link rel="canonical" href="https://tamanquran.id" />
+      </Helmet>
+
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main>
+          <HeroSection />
+          <AboutSection />
+          <ProgramsSection />
+          <AnnouncementsSection />
+          <ContactSection />
+        </main>
+        <Footer />
       </div>
-    </div>
+    </>
   );
 };
 
