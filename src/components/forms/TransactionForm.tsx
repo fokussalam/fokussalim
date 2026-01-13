@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -37,55 +37,32 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Plus, Loader2, CalendarIcon } from "lucide-react";
+import { Plus, Pencil, Loader2, CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { Tables } from "@/integrations/supabase/types";
+
+type Transaction = Tables<"transactions">;
 
 const transactionSchema = z.object({
-  type: z.enum(["pemasukan", "pengeluaran"], {
-    required_error: "Pilih jenis transaksi",
-  }),
-  category: z.enum([
-    "iuran_bulanan",
-    "infaq",
-    "donasi",
-    "konsumsi",
-    "transport",
-    "peralatan",
-    "lainnya",
-  ], {
-    required_error: "Pilih kategori",
-  }),
-  amount: z
-    .string()
-    .min(1, "Jumlah wajib diisi")
-    .refine(
-      (val) => {
-        const num = parseInt(val.replace(/\D/g, ""));
-        return !isNaN(num) && num > 0;
-      },
-      "Jumlah harus lebih dari 0"
-    )
-    .refine(
-      (val) => {
-        const num = parseInt(val.replace(/\D/g, ""));
-        return num <= 1000000000;
-      },
-      "Jumlah maksimal 1 miliar"
-    ),
-  transaction_date: z.date({
-    required_error: "Tanggal transaksi wajib diisi",
-  }),
-  description: z
-    .string()
-    .max(255, "Keterangan maksimal 255 karakter")
-    .optional()
-    .or(z.literal("")),
+  type: z.enum(["pemasukan", "pengeluaran"], { required_error: "Pilih jenis transaksi" }),
+  category: z.enum(["iuran_bulanan", "infaq", "donasi", "konsumsi", "transport", "peralatan", "lainnya"], { required_error: "Pilih kategori" }),
+  amount: z.string().min(1, "Jumlah wajib diisi").refine((val) => {
+    const num = parseInt(val.replace(/\D/g, ""));
+    return !isNaN(num) && num > 0;
+  }, "Jumlah harus lebih dari 0").refine((val) => {
+    const num = parseInt(val.replace(/\D/g, ""));
+    return num <= 1000000000;
+  }, "Jumlah maksimal 1 miliar"),
+  transaction_date: z.date({ required_error: "Tanggal transaksi wajib diisi" }),
+  description: z.string().max(255, "Keterangan maksimal 255 karakter").optional().or(z.literal("")),
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
 
-interface AddTransactionFormProps {
+interface TransactionFormProps {
+  transaction?: Transaction;
   onSuccess?: () => void;
+  trigger?: React.ReactNode;
 }
 
 const incomeCategories = [
@@ -102,15 +79,17 @@ const expenseCategories = [
   { value: "lainnya", label: "Lainnya" },
 ];
 
-export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
+export function TransactionForm({ transaction, onSuccess, trigger }: TransactionFormProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const isEdit = !!transaction;
 
   const form = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: "pemasukan",
+      category: "iuran_bulanan",
       description: "",
       amount: "",
     },
@@ -119,7 +98,26 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
   const selectedType = form.watch("type");
   const categories = selectedType === "pemasukan" ? incomeCategories : expenseCategories;
 
-  // Reset category when type changes
+  useEffect(() => {
+    if (transaction && open) {
+      const formattedAmount = new Intl.NumberFormat("id-ID").format(Number(transaction.amount));
+      form.reset({
+        type: transaction.type,
+        category: transaction.category,
+        amount: formattedAmount,
+        transaction_date: new Date(transaction.transaction_date),
+        description: transaction.description || "",
+      });
+    } else if (!transaction && open) {
+      form.reset({
+        type: "pemasukan",
+        category: "iuran_bulanan",
+        description: "",
+        amount: "",
+      });
+    }
+  }, [transaction, open, form]);
+
   const handleTypeChange = (value: "pemasukan" | "pengeluaran") => {
     form.setValue("type", value);
     form.setValue("category", value === "pemasukan" ? "iuran_bulanan" : "konsumsi");
@@ -135,39 +133,44 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
       const amount = parseInt(data.amount.replace(/\D/g, ""));
 
-      const { error } = await supabase.from("transactions").insert({
-        type: data.type,
-        category: data.category,
-        amount: amount,
-        transaction_date: format(data.transaction_date, "yyyy-MM-dd"),
-        description: data.description?.trim() || null,
-        recorded_by: user?.id || null,
-      });
+      if (isEdit && transaction) {
+        const { error } = await supabase
+          .from("transactions")
+          .update({
+            type: data.type,
+            category: data.category,
+            amount: amount,
+            transaction_date: format(data.transaction_date, "yyyy-MM-dd"),
+            description: data.description?.trim() || null,
+          })
+          .eq("id", transaction.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Berhasil!",
-        description: "Transaksi berhasil ditambahkan.",
-      });
+        toast({ title: "Berhasil!", description: "Transaksi berhasil diperbarui." });
+      } else {
+        const { error } = await supabase.from("transactions").insert({
+          type: data.type,
+          category: data.category,
+          amount: amount,
+          transaction_date: format(data.transaction_date, "yyyy-MM-dd"),
+          description: data.description?.trim() || null,
+          recorded_by: user?.id || null,
+        });
 
-      form.reset({
-        type: "pemasukan",
-        description: "",
-        amount: "",
-      });
+        if (error) throw error;
+
+        toast({ title: "Berhasil!", description: "Transaksi berhasil ditambahkan." });
+      }
+
+      form.reset({ type: "pemasukan", category: "iuran_bulanan", description: "", amount: "" });
       setOpen(false);
       onSuccess?.();
     } catch (error: any) {
-      console.error("Error adding transaction:", error);
-      toast({
-        title: "Gagal",
-        description: error.message || "Gagal menambahkan transaksi.",
-        variant: "destructive",
-      });
+      console.error("Error saving transaction:", error);
+      toast({ title: "Gagal", description: error.message || "Gagal menyimpan transaksi.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -176,18 +179,18 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
-          <Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">Tambah Transaksi</span>
-          <span className="sm:hidden">Tambah</span>
-        </Button>
+        {trigger || (
+          <Button className="gap-2">
+            {isEdit ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            <span className="hidden sm:inline">{isEdit ? "Edit" : "Tambah Transaksi"}</span>
+            <span className="sm:hidden">{isEdit ? "Edit" : "Tambah"}</span>
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Tambah Transaksi</DialogTitle>
-          <DialogDescription>
-            Catat transaksi keuangan komunitas.
-          </DialogDescription>
+          <DialogTitle>{isEdit ? "Edit Transaksi" : "Tambah Transaksi"}</DialogTitle>
+          <DialogDescription>{isEdit ? "Perbarui data transaksi." : "Catat transaksi keuangan komunitas."}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -198,28 +201,12 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
                 <FormItem>
                   <FormLabel>Jenis Transaksi *</FormLabel>
                   <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant={field.value === "pemasukan" ? "default" : "outline"}
-                      className={cn(
-                        "flex-1",
-                        field.value === "pemasukan" && "bg-emerald-600 hover:bg-emerald-700"
-                      )}
-                      onClick={() => handleTypeChange("pemasukan")}
-                    >
-                      Pemasukan
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={field.value === "pengeluaran" ? "default" : "outline"}
-                      className={cn(
-                        "flex-1",
-                        field.value === "pengeluaran" && "bg-red-600 hover:bg-red-700"
-                      )}
-                      onClick={() => handleTypeChange("pengeluaran")}
-                    >
-                      Pengeluaran
-                    </Button>
+                    <Button type="button" variant={field.value === "pemasukan" ? "default" : "outline"}
+                      className={cn("flex-1", field.value === "pemasukan" && "bg-emerald-600 hover:bg-emerald-700")}
+                      onClick={() => handleTypeChange("pemasukan")}>Pemasukan</Button>
+                    <Button type="button" variant={field.value === "pengeluaran" ? "default" : "outline"}
+                      className={cn("flex-1", field.value === "pengeluaran" && "bg-red-600 hover:bg-red-700")}
+                      onClick={() => handleTypeChange("pengeluaran")}>Pengeluaran</Button>
                   </div>
                   <FormMessage />
                 </FormItem>
@@ -234,15 +221,11 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
                   <FormLabel>Kategori *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih kategori" />
-                      </SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Pilih kategori" /></SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {categories.map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value}>
-                          {cat.label}
-                        </SelectItem>
+                        <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -259,18 +242,9 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
                   <FormLabel>Jumlah (Rp) *</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                        Rp
-                      </span>
-                      <Input
-                        placeholder="0"
-                        className="pl-10"
-                        inputMode="numeric"
-                        {...field}
-                        onChange={(e) => {
-                          field.onChange(formatCurrency(e.target.value));
-                        }}
-                      />
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rp</span>
+                      <Input placeholder="0" className="pl-10" inputMode="numeric" {...field}
+                        onChange={(e) => field.onChange(formatCurrency(e.target.value))} />
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -287,32 +261,15 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "dd/MM/yyyy")
-                          ) : (
-                            <span>Pilih tanggal</span>
-                          )}
+                        <Button variant="outline" className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                          {field.value ? format(field.value, "dd/MM/yyyy") : <span>Pilih tanggal</span>}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date()
-                        }
-                        initialFocus
-                      />
+                      <Calendar mode="single" selected={field.value} onSelect={field.onChange}
+                        disabled={(date) => date > new Date()} initialFocus />
                     </PopoverContent>
                   </Popover>
                   <FormMessage />
@@ -327,12 +284,7 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
                 <FormItem>
                   <FormLabel>Keterangan</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Keterangan transaksi..." 
-                      className="resize-none"
-                      rows={2}
-                      {...field} 
-                    />
+                    <Textarea placeholder="Keterangan transaksi..." className="resize-none" rows={2} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -340,17 +292,10 @@ export function AddTransactionForm({ onSuccess }: AddTransactionFormProps) {
             />
 
             <div className="flex gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-                className="flex-1"
-              >
-                Batal
-              </Button>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">Batal</Button>
               <Button type="submit" disabled={loading} className="flex-1">
                 {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Simpan
+                {isEdit ? "Simpan" : "Tambah"}
               </Button>
             </div>
           </form>
