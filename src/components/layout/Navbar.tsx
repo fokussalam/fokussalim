@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
-import logoTamanQuran from "@/assets/logo-taman-quran.png";
+import logoSalim from "@/assets/logo-salim.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,16 +19,12 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2 group">
+          <a href="#" className="flex items-center gap-3 group">
             <img 
-              src={logoTamanQuran} 
-              alt="Logo Taman Qur'an" 
-              className="h-12 w-auto object-contain"
+              src={logoSalim} 
+              alt="Salim - SALAM FM 97.4" 
+              className="h-10 w-auto object-contain"
             />
-            <div className="hidden sm:block">
-              <span className="font-bold text-lg text-foreground">Taman Qur'an</span>
-              <p className="text-xs text-muted-foreground -mt-0.5">Tanamkan Iman, Tanamkan Al Qur'an</p>
-            </div>
           </a>
 
           {/* Desktop Navigation */}

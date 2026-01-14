@@ -23,7 +23,7 @@ import {
   Settings,
   User,
 } from "lucide-react";
-import logoSalim from "@/assets/logo-taman-quran.png";
+import logoSalim from "@/assets/logo-salim.png";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -62,13 +62,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen bg-background flex">
       {/* Sidebar - Desktop */}
       <aside className="hidden lg:flex flex-col w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
-        <div className="p-6 border-b border-sidebar-border">
-          <Link to="/dashboard" className="flex items-center gap-3">
-            <img src={logoSalim} alt="Salim" className="w-10 h-10 rounded-full" />
-            <div>
-              <h1 className="font-bold text-lg">Salim</h1>
-              <p className="text-xs text-sidebar-foreground/70">Komunitas Pengajian</p>
-            </div>
+        <div className="p-4 border-b border-sidebar-border">
+          <Link to="/dashboard" className="flex items-center">
+            <img src={logoSalim} alt="Salim - SALAM FM 97.4" className="h-12 w-auto object-contain" />
           </Link>
         </div>
 
@@ -118,10 +114,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             onClick={() => setSidebarOpen(false)}
           />
           <aside className="absolute left-0 top-0 bottom-0 w-64 bg-sidebar text-sidebar-foreground">
-            <div className="p-6 border-b border-sidebar-border flex items-center justify-between">
-              <Link to="/dashboard" className="flex items-center gap-3">
-                <img src={logoSalim} alt="Salim" className="w-10 h-10 rounded-full" />
-                <h1 className="font-bold text-lg">Salim</h1>
+            <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
+              <Link to="/dashboard" className="flex items-center">
+                <img src={logoSalim} alt="Salim - SALAM FM 97.4" className="h-10 w-auto object-contain" />
               </Link>
               <Button
                 variant="ghost"
