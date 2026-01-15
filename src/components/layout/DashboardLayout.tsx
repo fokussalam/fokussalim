@@ -18,6 +18,7 @@ import {
   Users,
   Calendar,
   Wallet,
+  Brain,
   LogOut,
   Settings,
   User,
@@ -35,6 +36,7 @@ const navItems = [
   { label: "Anggota", href: "/dashboard/anggota", icon: Users },
   { label: "Kegiatan", href: "/dashboard/kegiatan", icon: Calendar },
   { label: "Keuangan", href: "/dashboard/keuangan", icon: Wallet },
+  { label: "Kuis", href: "/dashboard/kuis", icon: Brain },
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
