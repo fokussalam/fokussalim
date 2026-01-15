@@ -57,7 +57,7 @@ const Index = () => {
         <header className="bg-card border-b border-border sticky top-0 z-50">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
-              <img src={logoSalim} alt="Salim" className="w-10 h-10 rounded-full" />
+              <img src={logoSalim} alt="Salim" className="w-10 h-10 object-contain" />
               <div>
                 <h1 className="font-bold text-lg text-primary">Salim</h1>
                 <p className="text-xs text-muted-foreground">Komunitas Pengajian</p>
@@ -81,7 +81,7 @@ const Index = () => {
               <img
                 src={logoSalim}
                 alt="Salim Logo"
-                className="w-24 h-24 mx-auto mb-8 rounded-full shadow-lg"
+                className="w-24 h-24 mx-auto mb-8 object-contain"
               />
               <h1 className="text-4xl lg:text-5xl font-bold mb-6 text-foreground">
                 Selamat Datang di{" "}
@@ -179,7 +179,7 @@ const Index = () => {
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <img src={logoSalim} alt="Salim" className="w-8 h-8 rounded-full" />
+                <img src={logoSalim} alt="Salim" className="w-8 h-8 object-contain" />
                 <span className="font-semibold text-primary">Salim</span>
               </div>
               <p className="text-sm text-muted-foreground">
