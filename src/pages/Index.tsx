@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Helmet } from "react-helmet-async";
 import { Users, Calendar, Wallet, ArrowRight, Heart, BookOpen, Handshake } from "lucide-react";
-import logoSalim from "@/assets/logo-taman-quran.png";
+import logoSalim from "@/assets/logo-salim.png";
 
 const Index = () => {
   const features = [
