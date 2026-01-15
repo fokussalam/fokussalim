@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import Anggota from "./pages/dashboard/Anggota";
 import Kegiatan from "./pages/dashboard/Kegiatan";
 import Keuangan from "./pages/dashboard/Keuangan";
+import Kuis from "./pages/dashboard/Kuis";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -58,6 +59,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Keuangan />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/kuis"
+                element={
+                  <ProtectedRoute>
+                    <Kuis />
                   </ProtectedRoute>
                 }
               />
