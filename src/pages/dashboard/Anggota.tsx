@@ -6,12 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
 import { MemberForm } from "@/components/forms/MemberForm";
 import { DeleteDialog } from "@/components/forms/DeleteDialog";
-import { Search, Phone, MapPin, Users, Pencil, Trash2 } from "lucide-react";
+import { Search, Phone, MapPin, Users, Pencil, Trash2, CheckCircle, XCircle, Clock, UserCheck, Loader2 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Profile = Tables<"profiles">;
@@ -20,6 +21,7 @@ export default function Anggota() {
   const [members, setMembers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [processingId, setProcessingId] = useState<string | null>(null);
   const { isAdminOrPengurus } = useUserRole();
   const { toast } = useToast();
 
@@ -36,7 +38,6 @@ export default function Anggota() {
   }, [fetchMembers]);
 
   const handleDelete = async (id: string) => {
-    // Note: RLS doesn't allow delete on profiles, but we can set status to tidak_aktif
     const { error } = await supabase.from("profiles").update({ status: "tidak_aktif" }).eq("id", id);
     if (error) {
       toast({ title: "Gagal", description: "Gagal menonaktifkan anggota.", variant: "destructive" });
@@ -46,9 +47,54 @@ export default function Anggota() {
     }
   };
 
-  const filteredMembers = members.filter((member) =>
-    member.full_name.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleApprove = async (id: string) => {
+    setProcessingId(id);
+    try {
+      const { error } = await supabase.from("profiles").update({ status: "aktif" }).eq("id", id);
+      if (error) throw error;
+      toast({ title: "Berhasil", description: "Akun berhasil disetujui." });
+      fetchMembers();
+    } catch (error: any) {
+      toast({ title: "Gagal", description: error.message || "Gagal menyetujui akun.", variant: "destructive" });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    setProcessingId(id);
+    try {
+      const { error } = await supabase.from("profiles").update({ status: "tidak_aktif" }).eq("id", id);
+      if (error) throw error;
+      toast({ title: "Berhasil", description: "Akun ditolak." });
+      fetchMembers();
+    } catch (error: any) {
+      toast({ title: "Gagal", description: error.message || "Gagal menolak akun.", variant: "destructive" });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleReactivate = async (id: string) => {
+    setProcessingId(id);
+    try {
+      const { error } = await supabase.from("profiles").update({ status: "aktif" }).eq("id", id);
+      if (error) throw error;
+      toast({ title: "Berhasil", description: "Anggota berhasil diaktifkan kembali." });
+      fetchMembers();
+    } catch (error: any) {
+      toast({ title: "Gagal", description: error.message || "Gagal mengaktifkan anggota.", variant: "destructive" });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const pendingMembers = members.filter((m) => m.status === "pending");
+  const activeMembers = members.filter((m) => m.status === "aktif");
+  const inactiveMembers = members.filter((m) => m.status === "tidak_aktif");
+
+  const filteredMembers = (list: Profile[]) =>
+    list.filter((member) => member.full_name.toLowerCase().includes(search.toLowerCase()));
 
   const getInitials = (name: string) => name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
@@ -70,6 +116,144 @@ export default function Anggota() {
     }
   };
 
+  const MemberCard = ({ member, showApprovalActions = false, showReactivate = false }: { member: Profile; showApprovalActions?: boolean; showReactivate?: boolean }) => (
+    <Card key={member.id} className="card-hover">
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          <Avatar className="w-12 h-12 flex-shrink-0">
+            <AvatarImage src={member.avatar_url ?? undefined} />
+            <AvatarFallback className="bg-primary text-primary-foreground font-semibold">{getInitials(member.full_name)}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-semibold truncate">{member.full_name}</h3>
+              <Badge variant="secondary" className={`text-xs flex-shrink-0 ${getStatusColor(member.status ?? "pending")}`}>
+                {getStatusLabel(member.status ?? "pending")}
+              </Badge>
+            </div>
+            {member.phone && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Phone className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate">{member.phone}</span>
+              </div>
+            )}
+            {member.address && (
+              <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                <span className="line-clamp-2">{member.address}</span>
+              </div>
+            )}
+
+            {/* Approval Actions for Pending */}
+            {showApprovalActions && isAdminOrPengurus && (
+              <div className="flex items-center gap-2 pt-2">
+                <Button
+                  size="sm"
+                  className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700"
+                  onClick={() => handleApprove(member.id)}
+                  disabled={processingId === member.id}
+                >
+                  {processingId === member.id ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle className="w-3.5 h-3.5" />
+                  )}
+                  Setujui
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-destructive border-destructive hover:bg-destructive/10"
+                  onClick={() => handleReject(member.id)}
+                  disabled={processingId === member.id}
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  Tolak
+                </Button>
+              </div>
+            )}
+
+            {/* Reactivate Action for Inactive */}
+            {showReactivate && isAdminOrPengurus && (
+              <div className="flex items-center gap-2 pt-2">
+                <Button
+                  size="sm"
+                  className="h-8 gap-1.5"
+                  onClick={() => handleReactivate(member.id)}
+                  disabled={processingId === member.id}
+                >
+                  {processingId === member.id ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <UserCheck className="w-3.5 h-3.5" />
+                  )}
+                  Aktifkan Kembali
+                </Button>
+              </div>
+            )}
+
+            {/* Standard Edit/Delete Actions for Active */}
+            {!showApprovalActions && !showReactivate && isAdminOrPengurus && (
+              <div className="flex items-center gap-1 pt-2">
+                <MemberForm
+                  member={member}
+                  onSuccess={fetchMembers}
+                  trigger={
+                    <Button variant="ghost" size="sm" className="h-8 gap-1.5">
+                      <Pencil className="w-3.5 h-3.5" />
+                      Edit
+                    </Button>
+                  }
+                />
+                {member.status !== "tidak_aktif" && (
+                  <DeleteDialog
+                    title="Nonaktifkan Anggota?"
+                    description={`Anggota "${member.full_name}" akan dinonaktifkan. Anda dapat mengaktifkannya kembali nanti.`}
+                    onDelete={() => handleDelete(member.id)}
+                    trigger={
+                      <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10">
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Nonaktifkan
+                      </Button>
+                    }
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const EmptyState = ({ title, description }: { title: string; description: string }) => (
+    <Card>
+      <CardContent className="text-center py-12">
+        <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+        <h3 className="font-semibold text-lg mb-2">{title}</h3>
+        <p className="text-muted-foreground">{description}</p>
+      </CardContent>
+    </Card>
+  );
+
+  const LoadingSkeleton = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {[1, 2, 3].map((i) => (
+        <Card key={i} className="animate-pulse">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-muted" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-24 bg-muted rounded" />
+                <div className="h-3 w-32 bg-muted rounded" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
   return (
     <>
       <Helmet><title>Data Anggota - Salim | Komunitas Pengajian</title></Helmet>
@@ -89,93 +273,80 @@ export default function Anggota() {
             </div>
           </div>
 
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-muted" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 w-24 bg-muted rounded" />
-                        <div className="h-3 w-32 bg-muted rounded" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : filteredMembers.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-12">
-                <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="font-semibold text-lg mb-2">{search ? "Anggota Tidak Ditemukan" : "Belum Ada Anggota"}</h3>
-                <p className="text-muted-foreground">{search ? `Tidak ada anggota dengan nama "${search}"` : "Tambahkan anggota pertama komunitas Anda."}</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredMembers.map((member) => (
-                <Card key={member.id} className="card-hover">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <Avatar className="w-12 h-12 flex-shrink-0">
-                        <AvatarImage src={member.avatar_url ?? undefined} />
-                        <AvatarFallback className="bg-primary text-primary-foreground font-semibold">{getInitials(member.full_name)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0 space-y-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <h3 className="font-semibold truncate">{member.full_name}</h3>
-                          <Badge variant="secondary" className={`text-xs flex-shrink-0 ${getStatusColor(member.status ?? "pending")}`}>
-                            {getStatusLabel(member.status ?? "pending")}
-                          </Badge>
-                        </div>
-                        {member.phone && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Phone className="w-3.5 h-3.5 flex-shrink-0" />
-                            <span className="truncate">{member.phone}</span>
-                          </div>
-                        )}
-                        {member.address && (
-                          <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                            <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                            <span className="line-clamp-2">{member.address}</span>
-                          </div>
-                        )}
-                        {isAdminOrPengurus && (
-                          <div className="flex items-center gap-1 pt-2">
-                            <MemberForm
-                              member={member}
-                              onSuccess={fetchMembers}
-                              trigger={
-                                <Button variant="ghost" size="sm" className="h-8 gap-1.5">
-                                  <Pencil className="w-3.5 h-3.5" />
-                                  Edit
-                                </Button>
-                              }
-                            />
-                            {member.status !== "tidak_aktif" && (
-                              <DeleteDialog
-                                title="Nonaktifkan Anggota?"
-                                description={`Anggota "${member.full_name}" akan dinonaktifkan. Anda dapat mengaktifkannya kembali nanti.`}
-                                onDelete={() => handleDelete(member.id)}
-                                trigger={
-                                  <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10">
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    Nonaktifkan
-                                  </Button>
-                                }
-                              />
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          <Tabs defaultValue={pendingMembers.length > 0 && isAdminOrPengurus ? "pending" : "aktif"} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsTrigger value="pending" className="gap-2">
+                <Clock className="w-4 h-4" />
+                <span className="hidden sm:inline">Pending</span>
+                {pendingMembers.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 bg-yellow-100 text-yellow-700 text-xs">
+                    {pendingMembers.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="aktif" className="gap-2">
+                <CheckCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Aktif</span>
+                <Badge variant="secondary" className="ml-1 text-xs">{activeMembers.length}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="tidak_aktif" className="gap-2">
+                <XCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Tidak Aktif</span>
+                <Badge variant="secondary" className="ml-1 text-xs">{inactiveMembers.length}</Badge>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="pending">
+              {loading ? (
+                <LoadingSkeleton />
+              ) : filteredMembers(pendingMembers).length === 0 ? (
+                <EmptyState
+                  title={search ? "Tidak Ditemukan" : "Tidak Ada Akun Pending"}
+                  description={search ? `Tidak ada akun pending dengan nama "${search}"` : "Semua akun sudah diproses."}
+                />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredMembers(pendingMembers).map((member) => (
+                    <MemberCard key={member.id} member={member} showApprovalActions />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="aktif">
+              {loading ? (
+                <LoadingSkeleton />
+              ) : filteredMembers(activeMembers).length === 0 ? (
+                <EmptyState
+                  title={search ? "Tidak Ditemukan" : "Belum Ada Anggota Aktif"}
+                  description={search ? `Tidak ada anggota aktif dengan nama "${search}"` : "Setujui akun pending untuk menambahkan anggota."}
+                />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredMembers(activeMembers).map((member) => (
+                    <MemberCard key={member.id} member={member} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="tidak_aktif">
+              {loading ? (
+                <LoadingSkeleton />
+              ) : filteredMembers(inactiveMembers).length === 0 ? (
+                <EmptyState
+                  title={search ? "Tidak Ditemukan" : "Tidak Ada Anggota Tidak Aktif"}
+                  description={search ? `Tidak ada anggota tidak aktif dengan nama "${search}"` : "Anggota yang dinonaktifkan akan muncul di sini."}
+                />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredMembers(inactiveMembers).map((member) => (
+                    <MemberCard key={member.id} member={member} showReactivate />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </DashboardLayout>
     </>
