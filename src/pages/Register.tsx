@@ -1,7 +1,7 @@
 import { AuthForm } from "@/components/auth/AuthForm";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import logoSalim from "@/assets/logo-taman-quran.png";
+import logoSalim from "@/assets/logo-salim.png";
 
 export default function Register() {
   return (
@@ -13,7 +13,7 @@ export default function Register() {
 
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <Link to="/" className="flex items-center gap-3 mb-8">
-          <img src={logoSalim} alt="Salim" className="w-16 h-16 rounded-full" />
+          <img src={logoSalim} alt="Salim" className="w-16 h-16 object-contain" />
           <div className="text-center">
             <h1 className="text-2xl font-bold text-primary">Salim</h1>
             <p className="text-sm text-muted-foreground">Komunitas Pengajian</p>
