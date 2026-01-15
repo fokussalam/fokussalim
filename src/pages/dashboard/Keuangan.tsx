@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
 import { TransactionForm } from "@/components/forms/TransactionForm";
+import { TransactionExport } from "@/components/forms/TransactionExport";
+import { TransactionUpload } from "@/components/forms/TransactionUpload";
 import { DeleteDialog } from "@/components/forms/DeleteDialog";
 import { TrendingUp, TrendingDown, Wallet, Receipt, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
@@ -65,7 +67,15 @@ export default function Keuangan() {
               <h1 className="text-xl sm:text-2xl font-bold truncate">Keuangan</h1>
               <p className="text-sm text-muted-foreground">Kelola keuangan komunitas</p>
             </div>
-            {isAdminOrPengurus && <TransactionForm onSuccess={fetchTransactions} />}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <TransactionExport transactions={transactions} />
+              {isAdminOrPengurus && (
+                <>
+                  <TransactionUpload onSuccess={fetchTransactions} />
+                  <TransactionForm onSuccess={fetchTransactions} />
+                </>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
