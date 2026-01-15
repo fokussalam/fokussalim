@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Home,
+  LayoutDashboard,
   Users,
   Calendar,
   Wallet,
@@ -29,7 +30,8 @@ interface DashboardLayoutProps {
 }
 
 const navItems = [
-  { label: "Home", href: "/dashboard", icon: Home },
+  { label: "Beranda", href: "/", icon: Home },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Anggota", href: "/dashboard/anggota", icon: Users },
   { label: "Kegiatan", href: "/dashboard/kegiatan", icon: Calendar },
   { label: "Keuangan", href: "/dashboard/keuangan", icon: Wallet },
