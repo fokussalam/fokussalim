@@ -1,46 +1,72 @@
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Helmet } from "react-helmet-async";
-import { Users, Calendar, Wallet, ArrowRight, Heart, BookOpen, Handshake } from "lucide-react";
+import { 
+  Users, Calendar, Wallet, ArrowRight, Heart, BookOpen, Handshake, 
+  Star, Award, Target, Lightbulb, Shield, Zap, Pencil, Trash2, Plus 
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useToast } from "@/hooks/use-toast";
+import { HomepageContentForm } from "@/components/forms/HomepageContentForm";
+import { DeleteDialog } from "@/components/forms/DeleteDialog";
 import logoSalim from "@/assets/logo-salim.png";
 
-const Index = () => {
-  const features = [
-    {
-      icon: Users,
-      title: "Manajemen Anggota",
-      description: "Kelola data anggota komunitas dengan mudah dan terorganisir.",
-    },
-    {
-      icon: Calendar,
-      title: "Jadwal Kegiatan",
-      description: "Atur dan pantau jadwal kegiatan pengajian dan pertemuan.",
-    },
-    {
-      icon: Wallet,
-      title: "Keuangan & Iuran",
-      description: "Catat pemasukan, pengeluaran, dan iuran bulanan anggota.",
-    },
-  ];
+interface HomepageContent {
+  id: string;
+  section: string;
+  title: string;
+  description: string;
+  icon: string;
+  sort_order: number;
+  is_active: boolean;
+}
 
-  const values = [
-    {
-      icon: BookOpen,
-      title: "Pengajian Rutin",
-      description: "Kajian Al-Quran dan ilmu agama secara berkala.",
-    },
-    {
-      icon: Handshake,
-      title: "Silaturahmi",
-      description: "Mempererat tali persaudaraan antar anggota.",
-    },
-    {
-      icon: Heart,
-      title: "Kebersamaan",
-      description: "Saling mendukung dalam kebaikan.",
-    },
-  ];
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Users, Calendar, Wallet, Heart, BookOpen, Handshake, Star, Award, Target, Lightbulb, Shield, Zap,
+};
+
+const Index = () => {
+  const [features, setFeatures] = useState<HomepageContent[]>([]);
+  const [values, setValues] = useState<HomepageContent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { isAdminOrPengurus } = useUserRole();
+  const { toast } = useToast();
+
+  const fetchContent = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("homepage_content")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order");
+
+    if (error) {
+      console.error("Error fetching content:", error);
+    } else if (data) {
+      setFeatures(data.filter((item) => item.section === "features"));
+      setValues(data.filter((item) => item.section === "values"));
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchContent();
+  }, [fetchContent]);
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("homepage_content").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Gagal", description: "Gagal menghapus konten.", variant: "destructive" });
+    } else {
+      toast({ title: "Berhasil", description: "Konten berhasil dihapus." });
+      fetchContent();
+    }
+  };
+
+  const getIcon = (iconName: string) => iconMap[iconName] || Star;
 
   return (
     <>
@@ -109,50 +135,148 @@ const Index = () => {
         {/* Features Section */}
         <section className="py-20 bg-card">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Fitur Utama</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Semua yang Anda butuhkan untuk mengelola komunitas pengajian dalam satu aplikasi.
-              </p>
+            <div className="flex items-center justify-between mb-12">
+              <div className="text-center flex-1">
+                <h2 className="text-3xl font-bold mb-4">Fitur Utama</h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  Semua yang Anda butuhkan untuk mengelola komunitas pengajian dalam satu aplikasi.
+                </p>
+              </div>
+              {isAdminOrPengurus && (
+                <HomepageContentForm defaultSection="features" onSuccess={fetchContent} />
+              )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              {features.map((feature) => (
-                <Card key={feature.title} className="card-hover text-center">
-                  <CardHeader>
-                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                      <feature.icon className="w-7 h-7 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="animate-pulse">
+                    <CardHeader className="text-center">
+                      <div className="w-14 h-14 rounded-full bg-muted mx-auto mb-4" />
+                      <div className="h-6 w-32 bg-muted rounded mx-auto" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-4 w-full bg-muted rounded" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : features.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Belum ada fitur yang ditambahkan.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                {features.map((feature) => {
+                  const IconComponent = getIcon(feature.icon);
+                  return (
+                    <Card key={feature.id} className="card-hover text-center relative group">
+                      {isAdminOrPengurus && (
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <HomepageContentForm
+                            content={feature}
+                            onSuccess={fetchContent}
+                            trigger={
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            }
+                          />
+                          <DeleteDialog
+                            title="Hapus Konten?"
+                            description={`Konten "${feature.title}" akan dihapus secara permanen.`}
+                            onDelete={() => handleDelete(feature.id)}
+                            trigger={
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            }
+                          />
+                        </div>
+                      )}
+                      <CardHeader>
+                        <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                          <IconComponent className="w-7 h-7 text-primary" />
+                        </div>
+                        <CardTitle className="text-xl">{feature.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground">{feature.description}</p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
 
         {/* Values Section */}
         <section className="py-20">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Tentang Kami</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Salim hadir untuk memfasilitasi komunitas pengajian dalam menjalankan kegiatan keagamaan.
-              </p>
+            <div className="flex items-center justify-between mb-12">
+              <div className="text-center flex-1">
+                <h2 className="text-3xl font-bold mb-4">Tentang Kami</h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  Salim hadir untuk memfasilitasi komunitas pengajian dalam menjalankan kegiatan keagamaan.
+                </p>
+              </div>
+              {isAdminOrPengurus && (
+                <HomepageContentForm defaultSection="values" onSuccess={fetchContent} />
+              )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              {values.map((value) => (
-                <div key={value.title} className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-4">
-                    <value.icon className="w-8 h-8 text-secondary" />
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="animate-pulse text-center">
+                    <div className="w-16 h-16 rounded-full bg-muted mx-auto mb-4" />
+                    <div className="h-5 w-24 bg-muted rounded mx-auto mb-2" />
+                    <div className="h-4 w-32 bg-muted rounded mx-auto" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">{value.title}</h3>
-                  <p className="text-muted-foreground">{value.description}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : values.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Belum ada nilai yang ditambahkan.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                {values.map((value) => {
+                  const IconComponent = getIcon(value.icon);
+                  return (
+                    <div key={value.id} className="text-center relative group">
+                      {isAdminOrPengurus && (
+                        <div className="absolute top-0 right-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <HomepageContentForm
+                            content={value}
+                            onSuccess={fetchContent}
+                            trigger={
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            }
+                          />
+                          <DeleteDialog
+                            title="Hapus Konten?"
+                            description={`Konten "${value.title}" akan dihapus secara permanen.`}
+                            onDelete={() => handleDelete(value.id)}
+                            trigger={
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            }
+                          />
+                        </div>
+                      )}
+                      <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-4">
+                        <IconComponent className="w-8 h-8 text-secondary" />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">{value.title}</h3>
+                      <p className="text-muted-foreground">{value.description}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
 
