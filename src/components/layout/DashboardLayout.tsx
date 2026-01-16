@@ -31,12 +31,12 @@ interface DashboardLayoutProps {
 }
 
 const navItems = [
-  { label: "Beranda", href: "/", icon: Home },
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Anggota", href: "/dashboard/anggota", icon: Users },
-  { label: "Kegiatan", href: "/dashboard/kegiatan", icon: Calendar },
-  { label: "Keuangan", href: "/dashboard/keuangan", icon: Wallet },
-  { label: "Kuis", href: "/dashboard/kuis", icon: Brain },
+  { label: "Beranda", href: "/", icon: Home, adminOnly: false },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, adminOnly: false },
+  { label: "Anggota", href: "/dashboard/anggota", icon: Users, adminOnly: true },
+  { label: "Kegiatan", href: "/dashboard/kegiatan", icon: Calendar, adminOnly: false },
+  { label: "Keuangan", href: "/dashboard/keuangan", icon: Wallet, adminOnly: true },
+  { label: "Kuis", href: "/dashboard/kuis", icon: Brain, adminOnly: false },
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -126,27 +126,29 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Bottom Navigation - Mobile App Style */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border safe-area-bottom">
         <div className="flex items-center justify-around h-16">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <div className={`p-1.5 rounded-xl transition-all ${isActive ? "bg-primary/10" : ""}`}>
-                  <item.icon className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : "stroke-[1.5]"}`} />
-                </div>
-                <span className={`text-[10px] font-medium ${isActive ? "font-semibold" : ""}`}>
-                  {item.label}
-                </span>
-              </Link>
-            );
-          })}
+          {navItems
+            .filter((item) => !item.adminOnly || isAdmin || isPengurus)
+            .map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <div className={`p-1.5 rounded-xl transition-all ${isActive ? "bg-primary/10" : ""}`}>
+                    <item.icon className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : "stroke-[1.5]"}`} />
+                  </div>
+                  <span className={`text-[10px] font-medium ${isActive ? "font-semibold" : ""}`}>
+                    {item.label}
+                  </span>
+                </Link>
+              );
+            })}
         </div>
       </nav>
     </div>
