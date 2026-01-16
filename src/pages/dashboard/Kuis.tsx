@@ -9,8 +9,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ScheduledQuizList } from "@/components/quiz/ScheduledQuizList";
 import { 
   Brain, 
   Loader2, 
@@ -20,7 +22,8 @@ import {
   RotateCcw,
   Trophy,
   Lightbulb,
-  Sparkles
+  Sparkles,
+  Calendar
 } from "lucide-react";
 
 interface Question {
@@ -56,7 +59,7 @@ const DIFFICULTIES = [
   { value: "sulit", label: "Sulit", color: "bg-red-500" },
 ];
 
-export default function Kuis() {
+function AIQuizTab() {
   const [topic, setTopic] = useState("");
   const [customTopic, setCustomTopic] = useState("");
   const [difficulty, setDifficulty] = useState("sedang");
@@ -118,7 +121,6 @@ export default function Kuis() {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
     } else {
-      // Calculate results
       const answers = Array.from(newAnswers.entries()).map(([questionId, userAnswer]) => {
         const question = questions.find((q) => q.id === questionId);
         return {
@@ -149,271 +151,304 @@ export default function Kuis() {
     return { text: "Tetap Semangat! 💪", color: "text-red-600" };
   };
 
+  if (questions.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="w-5 h-5 text-primary" />
+            Buat Kuis Baru
+          </CardTitle>
+          <CardDescription>
+            Pilih topik dan tingkat kesulitan untuk memulai kuis
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Topik Kuis</Label>
+            <Select value={topic} onValueChange={setTopic}>
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih topik..." />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                {TOPICS.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+                <SelectItem value="custom">Topik Lainnya...</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {topic === "custom" && (
+            <div className="space-y-2">
+              <Label>Topik Kustom</Label>
+              <Input
+                value={customTopic}
+                onChange={(e) => setCustomTopic(e.target.value)}
+                placeholder="Masukkan topik kuis..."
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label>Tingkat Kesulitan</Label>
+            <div className="flex gap-2">
+              {DIFFICULTIES.map((d) => (
+                <Button
+                  key={d.value}
+                  variant={difficulty === d.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setDifficulty(d.value)}
+                  className="flex-1"
+                >
+                  {d.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Jumlah Soal</Label>
+            <Select value={questionCount} onValueChange={setQuestionCount}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="3">3 Soal</SelectItem>
+                <SelectItem value="5">5 Soal</SelectItem>
+                <SelectItem value="10">10 Soal</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button
+            onClick={generateQuiz}
+            disabled={isLoading}
+            className="w-full"
+            size="lg"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Membuat Kuis...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Mulai Kuis
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (showResult && result) {
+    return (
+      <Card>
+        <CardHeader className="text-center pb-2">
+          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+            <Trophy className="w-8 h-8 text-primary" />
+          </div>
+          <CardTitle className="text-2xl">Hasil Kuis</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="text-center">
+            <div className="text-5xl font-bold text-primary mb-2">
+              {result.correct}/{result.total}
+            </div>
+            <p className={`text-lg font-medium ${getScoreMessage((result.correct / result.total) * 100).color}`}>
+              {getScoreMessage((result.correct / result.total) * 100).text}
+            </p>
+            <Progress 
+              value={(result.correct / result.total) * 100} 
+              className="mt-4 h-3"
+            />
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Lightbulb className="w-4 h-4" />
+              Pembahasan
+            </h3>
+            {questions.map((q, idx) => {
+              const userAnswer = userAnswers.get(q.id);
+              const isCorrect = userAnswer === q.correctAnswer;
+              return (
+                <div
+                  key={q.id}
+                  className={`p-4 rounded-lg border ${
+                    isCorrect ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
+                  }`}
+                >
+                  <div className="flex items-start gap-2 mb-2">
+                    {isCorrect ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                    )}
+                    <div>
+                      <p className="font-medium text-sm">
+                        {idx + 1}. {q.question}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Jawaban benar: {q.options[q.correctAnswer]}
+                      </p>
+                      {!isCorrect && userAnswer !== undefined && (
+                        <p className="text-xs text-red-600 mt-1">
+                          Jawaban Anda: {q.options[userAnswer]}
+                        </p>
+                      )}
+                      <p className="text-xs mt-2 text-muted-foreground">
+                        {q.explanation}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <Button onClick={resetQuiz} className="w-full" size="lg">
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Buat Kuis Baru
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between mb-2">
+          <Badge variant="secondary">
+            Soal {currentQuestion + 1} dari {questions.length}
+          </Badge>
+          <Badge 
+            variant="outline"
+            className={
+              difficulty === "mudah" 
+                ? "border-emerald-500 text-emerald-600" 
+                : difficulty === "sedang"
+                ? "border-amber-500 text-amber-600"
+                : "border-red-500 text-red-600"
+            }
+          >
+            {DIFFICULTIES.find((d) => d.value === difficulty)?.label}
+          </Badge>
+        </div>
+        <Progress 
+          value={((currentQuestion + 1) / questions.length) * 100} 
+          className="h-2"
+        />
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold leading-relaxed">
+            {questions[currentQuestion]?.question}
+          </h2>
+        </div>
+
+        <RadioGroup
+          value={selectedAnswer?.toString()}
+          onValueChange={(value) => setSelectedAnswer(parseInt(value))}
+          className="space-y-3"
+        >
+          {questions[currentQuestion]?.options.map((option, idx) => (
+            <div
+              key={idx}
+              className={`flex items-center space-x-3 p-4 rounded-lg border transition-all cursor-pointer ${
+                selectedAnswer === idx
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/50"
+              }`}
+              onClick={() => setSelectedAnswer(idx)}
+            >
+              <RadioGroupItem value={idx.toString()} id={`option-${idx}`} />
+              <Label
+                htmlFor={`option-${idx}`}
+                className="flex-1 cursor-pointer font-normal"
+              >
+                {option}
+              </Label>
+            </div>
+          ))}
+        </RadioGroup>
+
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={resetQuiz}
+            className="flex-1"
+          >
+            Keluar
+          </Button>
+          <Button
+            onClick={handleAnswer}
+            className="flex-1"
+            disabled={selectedAnswer === null}
+          >
+            {currentQuestion < questions.length - 1 ? (
+              <>
+                Selanjutnya
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </>
+            ) : (
+              "Lihat Hasil"
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function Kuis() {
   return (
     <>
       <Helmet>
-        <title>Kuis Temu Relawan - Salim | Komunitas Pengajian</title>
+        <title>Kuis - Salim | Komunitas Pengajian</title>
       </Helmet>
 
       <DashboardLayout>
         <div className="space-y-6 max-w-2xl mx-auto">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full mb-4">
-              <Sparkles className="w-4 h-4" />
-              <span className="text-sm font-medium">Berbasis AI</span>
-            </div>
-            <h1 className="text-2xl font-bold">Kuis Temu Relawan</h1>
+            <h1 className="text-2xl font-bold">Kuis</h1>
             <p className="text-muted-foreground mt-1">
-              Uji pengetahuan Anda dengan kuis interaktif berbasis AI
+              Uji pengetahuan Anda dengan berbagai jenis kuis
             </p>
           </div>
 
-          {questions.length === 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="w-5 h-5 text-primary" />
-                  Buat Kuis Baru
-                </CardTitle>
-                <CardDescription>
-                  Pilih topik dan tingkat kesulitan untuk memulai kuis
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Topik Kuis</Label>
-                  <Select value={topic} onValueChange={setTopic}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih topik..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover">
-                      {TOPICS.map((t) => (
-                        <SelectItem key={t.value} value={t.value}>
-                          {t.label}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="custom">Topik Lainnya...</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          <Tabs defaultValue="scheduled" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="scheduled" className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Kuis Terjadwal
+              </TabsTrigger>
+              <TabsTrigger value="ai" className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                Kuis AI
+              </TabsTrigger>
+            </TabsList>
 
-                {topic === "custom" && (
-                  <div className="space-y-2">
-                    <Label>Topik Kustom</Label>
-                    <Input
-                      value={customTopic}
-                      onChange={(e) => setCustomTopic(e.target.value)}
-                      placeholder="Masukkan topik kuis..."
-                    />
-                  </div>
-                )}
+            <TabsContent value="scheduled" className="mt-6">
+              <ScheduledQuizList />
+            </TabsContent>
 
-                <div className="space-y-2">
-                  <Label>Tingkat Kesulitan</Label>
-                  <div className="flex gap-2">
-                    {DIFFICULTIES.map((d) => (
-                      <Button
-                        key={d.value}
-                        variant={difficulty === d.value ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setDifficulty(d.value)}
-                        className="flex-1"
-                      >
-                        {d.label}
-                      </Button>
-                    ))}
-                  </div>
+            <TabsContent value="ai" className="mt-6">
+              <div className="mb-4">
+                <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full">
+                  <Sparkles className="w-4 h-4" />
+                  <span className="text-sm font-medium">Berbasis AI</span>
                 </div>
-
-                <div className="space-y-2">
-                  <Label>Jumlah Soal</Label>
-                  <Select value={questionCount} onValueChange={setQuestionCount}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover">
-                      <SelectItem value="3">3 Soal</SelectItem>
-                      <SelectItem value="5">5 Soal</SelectItem>
-                      <SelectItem value="10">10 Soal</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button
-                  onClick={generateQuiz}
-                  disabled={isLoading}
-                  className="w-full"
-                  size="lg"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Membuat Kuis...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Mulai Kuis
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-          ) : showResult && result ? (
-            <Card>
-              <CardHeader className="text-center pb-2">
-                <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                  <Trophy className="w-8 h-8 text-primary" />
-                </div>
-                <CardTitle className="text-2xl">Hasil Kuis</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="text-center">
-                  <div className="text-5xl font-bold text-primary mb-2">
-                    {result.correct}/{result.total}
-                  </div>
-                  <p className={`text-lg font-medium ${getScoreMessage((result.correct / result.total) * 100).color}`}>
-                    {getScoreMessage((result.correct / result.total) * 100).text}
-                  </p>
-                  <Progress 
-                    value={(result.correct / result.total) * 100} 
-                    className="mt-4 h-3"
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <h3 className="font-semibold flex items-center gap-2">
-                    <Lightbulb className="w-4 h-4" />
-                    Pembahasan
-                  </h3>
-                  {questions.map((q, idx) => {
-                    const userAnswer = userAnswers.get(q.id);
-                    const isCorrect = userAnswer === q.correctAnswer;
-                    return (
-                      <div
-                        key={q.id}
-                        className={`p-4 rounded-lg border ${
-                          isCorrect ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
-                        }`}
-                      >
-                        <div className="flex items-start gap-2 mb-2">
-                          {isCorrect ? (
-                            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                          ) : (
-                            <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-                          )}
-                          <div>
-                            <p className="font-medium text-sm">
-                              {idx + 1}. {q.question}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Jawaban benar: {q.options[q.correctAnswer]}
-                            </p>
-                            {!isCorrect && userAnswer !== undefined && (
-                              <p className="text-xs text-red-600 mt-1">
-                                Jawaban Anda: {q.options[userAnswer]}
-                              </p>
-                            )}
-                            <p className="text-xs mt-2 text-muted-foreground">
-                              {q.explanation}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <Button onClick={resetQuiz} className="w-full" size="lg">
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Buat Kuis Baru
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant="secondary">
-                    Soal {currentQuestion + 1} dari {questions.length}
-                  </Badge>
-                  <Badge 
-                    variant="outline"
-                    className={
-                      difficulty === "mudah" 
-                        ? "border-emerald-500 text-emerald-600" 
-                        : difficulty === "sedang"
-                        ? "border-amber-500 text-amber-600"
-                        : "border-red-500 text-red-600"
-                    }
-                  >
-                    {DIFFICULTIES.find((d) => d.value === difficulty)?.label}
-                  </Badge>
-                </div>
-                <Progress 
-                  value={((currentQuestion + 1) / questions.length) * 100} 
-                  className="h-2"
-                />
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <h2 className="text-lg font-semibold leading-relaxed">
-                    {questions[currentQuestion]?.question}
-                  </h2>
-                </div>
-
-                <RadioGroup
-                  value={selectedAnswer?.toString()}
-                  onValueChange={(value) => setSelectedAnswer(parseInt(value))}
-                  className="space-y-3"
-                >
-                  {questions[currentQuestion]?.options.map((option, idx) => (
-                    <div
-                      key={idx}
-                      className={`flex items-center space-x-3 p-4 rounded-lg border transition-all cursor-pointer ${
-                        selectedAnswer === idx
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                      onClick={() => setSelectedAnswer(idx)}
-                    >
-                      <RadioGroupItem value={idx.toString()} id={`option-${idx}`} />
-                      <Label
-                        htmlFor={`option-${idx}`}
-                        className="flex-1 cursor-pointer font-normal"
-                      >
-                        {option}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={resetQuiz}
-                    className="flex-1"
-                  >
-                    Keluar
-                  </Button>
-                  <Button
-                    onClick={handleAnswer}
-                    className="flex-1"
-                    disabled={selectedAnswer === null}
-                  >
-                    {currentQuestion < questions.length - 1 ? (
-                      <>
-                        Selanjutnya
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </>
-                    ) : (
-                      "Lihat Hasil"
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+              <AIQuizTab />
+            </TabsContent>
+          </Tabs>
         </div>
       </DashboardLayout>
     </>
