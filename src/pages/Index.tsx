@@ -5,10 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Helmet } from "react-helmet-async";
 import { 
   Users, Calendar, Wallet, ArrowRight, Heart, BookOpen, Handshake, 
-  Star, Award, Target, Lightbulb, Shield, Zap, Pencil, Trash2, Plus 
+  Star, Award, Target, Lightbulb, Shield, Zap, Pencil, Trash2, Plus,
+  LayoutDashboard, LogOut
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { HomepageContentForm } from "@/components/forms/HomepageContentForm";
 import { DeleteDialog } from "@/components/forms/DeleteDialog";
@@ -32,7 +34,8 @@ const Index = () => {
   const [features, setFeatures] = useState<HomepageContent[]>([]);
   const [values, setValues] = useState<HomepageContent[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isAdminOrPengurus } = useUserRole();
+  const { isAdminOrPengurus, isAnggota, loading: roleLoading } = useUserRole();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
 
   const fetchContent = useCallback(async () => {
@@ -90,12 +93,36 @@ const Index = () => {
               </div>
             </Link>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" asChild>
-                <Link to="/login">Masuk</Link>
-              </Button>
-              <Button asChild>
-                <Link to="/register">Daftar</Link>
-              </Button>
+              {user ? (
+                <>
+                  <Button variant="ghost" asChild>
+                    <Link to="/dashboard">
+                      <LayoutDashboard className="w-4 h-4 mr-2" />
+                      Dashboard
+                    </Link>
+                  </Button>
+                  {isAdminOrPengurus && (
+                    <Button variant="outline" asChild>
+                      <Link to="/dashboard/anggota">
+                        <Users className="w-4 h-4 mr-2" />
+                        Kelola Anggota
+                      </Link>
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="icon" onClick={signOut} title="Keluar">
+                    <LogOut className="w-4 h-4" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" asChild>
+                    <Link to="/login">Masuk</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link to="/register">Daftar</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </header>
