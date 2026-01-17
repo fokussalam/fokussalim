@@ -5,10 +5,25 @@ import { Helmet } from "react-helmet-async";
 import { 
   Menu, X, BookOpen, MessageCircle, BookMarked, Heart,
   Calendar, MapPin, User, ChevronRight, ExternalLink,
-  Phone, Instagram, Youtube, ArrowRight
+  Phone, Instagram, Youtube, ArrowRight, Pencil, Plus, Trash2,
+  Users, Wallet, Handshake, Star, Award, Target, Lightbulb, Shield, Zap
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
+import { HomepageContentForm } from "@/components/forms/HomepageContentForm";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Mobile Top Bar Component
 const TopBar = ({ onMenuClick, isMenuOpen }: { onMenuClick: () => void; isMenuOpen: boolean }) => (
@@ -94,31 +109,133 @@ const HeroSection = () => (
   </section>
 );
 
+// Icon mapping
+const iconMap: Record<string, any> = {
+  BookOpen, MessageCircle, BookMarked, Heart, Users, Calendar, Wallet,
+  Handshake, Star, Award, Target, Lightbulb, Shield, Zap
+};
+
+// Homepage content interface
+interface HomepageContent {
+  id: string;
+  section: string;
+  title: string;
+  description: string;
+  icon: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
 // Program Grid (2x2)
-const ProgramSection = () => {
-  const programs = [
-    { icon: BookOpen, title: "Kajian Rutin", desc: "Kajian mingguan" },
-    { icon: MessageCircle, title: "RKS", desc: "Ruang Konsultasi" },
-    { icon: BookMarked, title: "Tahsin & Tahfizh", desc: "Belajar Al-Qur'an" },
-    { icon: Heart, title: "Sosial", desc: "Kegiatan amal" },
+const ProgramSection = ({ 
+  isAdmin, 
+  content,
+  onRefresh 
+}: { 
+  isAdmin: boolean; 
+  content: HomepageContent[];
+  onRefresh: () => void;
+}) => {
+  const { toast } = useToast();
+  const programs = content.filter(c => c.section === "programs");
+  
+  // Default programs if no content from DB
+  const defaultPrograms = [
+    { icon: "BookOpen", title: "Kajian Rutin", description: "Kajian mingguan" },
+    { icon: "MessageCircle", title: "RKS", description: "Ruang Konsultasi" },
+    { icon: "BookMarked", title: "Tahsin & Tahfizh", description: "Belajar Al-Qur'an" },
+    { icon: "Heart", title: "Sosial", description: "Kegiatan amal" },
   ];
+
+  const displayPrograms = programs.length > 0 
+    ? programs.map(p => ({ ...p, icon: p.icon }))
+    : defaultPrograms.map((p, i) => ({ 
+        id: `default-${i}`, 
+        section: "programs",
+        title: p.title, 
+        description: p.description, 
+        icon: p.icon,
+        sort_order: i,
+        is_active: true
+      }));
+
+  const handleDelete = async (id: string) => {
+    if (id.startsWith("default-")) return;
+    const { error } = await supabase.from("homepage_content").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Gagal", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Berhasil", description: "Konten dihapus" });
+      onRefresh();
+    }
+  };
 
   return (
     <section id="program" className="py-8 px-4">
-      <h3 className="text-lg font-semibold mb-4 text-center">Program Utama</h3>
+      <div className="flex items-center justify-center gap-2 mb-4">
+        <h3 className="text-lg font-semibold">Program Utama</h3>
+        {isAdmin && (
+          <HomepageContentForm 
+            defaultSection="programs" 
+            onSuccess={onRefresh}
+            trigger={
+              <Button size="icon" variant="ghost" className="h-7 w-7">
+                <Plus className="w-4 h-4" />
+              </Button>
+            }
+          />
+        )}
+      </div>
       <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
-        {programs.map((program) => (
-          <div
-            key={program.title}
-            className="bg-card rounded-xl p-4 text-center border border-border card-hover"
-          >
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-              <program.icon className="w-5 h-5 text-primary" />
+        {displayPrograms.map((program) => {
+          const IconComponent = iconMap[program.icon] || Star;
+          return (
+            <div
+              key={program.id}
+              className="bg-card rounded-xl p-4 text-center border border-border card-hover relative group"
+            >
+              {isAdmin && !program.id.startsWith("default-") && (
+                <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <HomepageContentForm 
+                    content={program}
+                    onSuccess={onRefresh}
+                    trigger={
+                      <Button size="icon" variant="ghost" className="h-6 w-6">
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                    }
+                  />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive">
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Hapus konten?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Konten "{program.title}" akan dihapus permanen.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(program.id)}>
+                          Hapus
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              )}
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                <IconComponent className="w-5 h-5 text-primary" />
+              </div>
+              <h4 className="font-medium text-sm text-foreground">{program.title}</h4>
+              <p className="text-xs text-muted-foreground mt-0.5">{program.description}</p>
             </div>
-            <h4 className="font-medium text-sm text-foreground">{program.title}</h4>
-            <p className="text-xs text-muted-foreground mt-0.5">{program.desc}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
@@ -211,39 +328,174 @@ const ScheduleSection = () => {
 };
 
 // Content Section (Quote + Article)
-const ContentSection = () => (
-  <section id="konten" className="py-8 px-4">
-    <div className="max-w-sm mx-auto">
-      <h3 className="text-lg font-semibold mb-4 text-center">Konten Terbaru</h3>
-      
-      {/* Quote */}
-      <div className="bg-primary/5 rounded-xl p-5 mb-4 border border-primary/10">
-        <p className="text-sm text-foreground italic leading-relaxed">
-          "Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lainnya."
-        </p>
-        <p className="text-xs text-muted-foreground mt-2">— HR. Ahmad</p>
-      </div>
+const ContentSection = ({ 
+  isAdmin, 
+  content,
+  onRefresh 
+}: { 
+  isAdmin: boolean; 
+  content: HomepageContent[];
+  onRefresh: () => void;
+}) => {
+  const { toast } = useToast();
+  const quotes = content.filter(c => c.section === "quotes");
+  const articles = content.filter(c => c.section === "articles");
 
-      {/* Latest Article */}
-      <div className="bg-card rounded-xl p-4 border border-border">
-        <span className="text-xs font-medium text-primary">Artikel</span>
-        <h4 className="font-medium text-sm text-foreground mt-1 mb-2">
-          Keutamaan Menjaga Silaturahmi dalam Islam
-        </h4>
-        <p className="text-xs text-muted-foreground line-clamp-2">
-          Silaturahmi merupakan salah satu ibadah yang memiliki banyak keutamaan...
-        </p>
-      </div>
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("homepage_content").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Gagal", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Berhasil", description: "Konten dihapus" });
+      onRefresh();
+    }
+  };
 
-      <Button variant="ghost" className="w-full mt-4 text-sm" asChild>
-        <a href="#" className="flex items-center justify-center gap-1">
-          Lihat Semua
-          <ChevronRight className="w-4 h-4" />
-        </a>
-      </Button>
-    </div>
-  </section>
-);
+  return (
+    <section id="konten" className="py-8 px-4">
+      <div className="max-w-sm mx-auto">
+        <h3 className="text-lg font-semibold mb-4 text-center">Konten Terbaru</h3>
+        
+        {/* Quote */}
+        <div className="relative group">
+          {isAdmin && (
+            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <HomepageContentForm 
+                defaultSection="quotes" 
+                onSuccess={onRefresh}
+                trigger={
+                  <Button size="icon" variant="ghost" className="h-6 w-6 bg-background/80">
+                    <Plus className="w-3 h-3" />
+                  </Button>
+                }
+              />
+            </div>
+          )}
+          {quotes.length > 0 ? (
+            quotes.slice(0, 1).map(quote => (
+              <div key={quote.id} className="bg-primary/5 rounded-xl p-5 mb-4 border border-primary/10 relative group">
+                {isAdmin && (
+                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <HomepageContentForm 
+                      content={quote}
+                      onSuccess={onRefresh}
+                      trigger={
+                        <Button size="icon" variant="ghost" className="h-6 w-6 bg-background/80">
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                      }
+                    />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-6 w-6 bg-background/80 text-destructive">
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Hapus quote?</AlertDialogTitle>
+                          <AlertDialogDescription>Quote ini akan dihapus permanen.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Batal</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(quote.id)}>Hapus</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+                <p className="text-sm text-foreground italic leading-relaxed">
+                  "{quote.description}"
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">— {quote.title}</p>
+              </div>
+            ))
+          ) : (
+            <div className="bg-primary/5 rounded-xl p-5 mb-4 border border-primary/10">
+              <p className="text-sm text-foreground italic leading-relaxed">
+                "Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lainnya."
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">— HR. Ahmad</p>
+            </div>
+          )}
+        </div>
+
+        {/* Latest Article */}
+        <div className="relative group">
+          {isAdmin && (
+            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <HomepageContentForm 
+                defaultSection="articles" 
+                onSuccess={onRefresh}
+                trigger={
+                  <Button size="icon" variant="ghost" className="h-6 w-6 bg-background/80">
+                    <Plus className="w-3 h-3" />
+                  </Button>
+                }
+              />
+            </div>
+          )}
+          {articles.length > 0 ? (
+            articles.slice(0, 1).map(article => (
+              <div key={article.id} className="bg-card rounded-xl p-4 border border-border relative group">
+                {isAdmin && (
+                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <HomepageContentForm 
+                      content={article}
+                      onSuccess={onRefresh}
+                      trigger={
+                        <Button size="icon" variant="ghost" className="h-6 w-6 bg-background/80">
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                      }
+                    />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-6 w-6 bg-background/80 text-destructive">
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Hapus artikel?</AlertDialogTitle>
+                          <AlertDialogDescription>Artikel ini akan dihapus permanen.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Batal</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(article.id)}>Hapus</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+                <span className="text-xs font-medium text-primary">Artikel</span>
+                <h4 className="font-medium text-sm text-foreground mt-1 mb-2">{article.title}</h4>
+                <p className="text-xs text-muted-foreground line-clamp-2">{article.description}</p>
+              </div>
+            ))
+          ) : (
+            <div className="bg-card rounded-xl p-4 border border-border">
+              <span className="text-xs font-medium text-primary">Artikel</span>
+              <h4 className="font-medium text-sm text-foreground mt-1 mb-2">
+                Keutamaan Menjaga Silaturahmi dalam Islam
+              </h4>
+              <p className="text-xs text-muted-foreground line-clamp-2">
+                Silaturahmi merupakan salah satu ibadah yang memiliki banyak keutamaan...
+              </p>
+            </div>
+          )}
+        </div>
+
+        <Button variant="ghost" className="w-full mt-4 text-sm" asChild>
+          <a href="#" className="flex items-center justify-center gap-1">
+            Lihat Semua
+            <ChevronRight className="w-4 h-4" />
+          </a>
+        </Button>
+      </div>
+    </section>
+  );
+};
 
 // Gallery Section (Horizontal Scroll)
 const GallerySection = () => {
@@ -351,7 +603,22 @@ const MiniFooter = () => (
 // Main Index Component
 const Index = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [homepageContent, setHomepageContent] = useState<HomepageContent[]>([]);
   const { user } = useAuth();
+  const { isAdminOrPengurus } = useUserRole();
+
+  const fetchContent = async () => {
+    const { data } = await supabase
+      .from("homepage_content")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+    setHomepageContent(data || []);
+  };
+
+  useEffect(() => {
+    fetchContent();
+  }, []);
 
   return (
     <>
@@ -376,9 +643,9 @@ const Index = () => {
         
         <main>
           <HeroSection />
-          <ProgramSection />
+          <ProgramSection isAdmin={isAdminOrPengurus} content={homepageContent} onRefresh={fetchContent} />
           <ScheduleSection />
-          <ContentSection />
+          <ContentSection isAdmin={isAdminOrPengurus} content={homepageContent} onRefresh={fetchContent} />
           <GallerySection />
           <CTASection />
         </main>

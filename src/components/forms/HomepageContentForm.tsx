@@ -33,7 +33,7 @@ import {
 import { Plus, Pencil, Loader2 } from "lucide-react";
 
 const contentSchema = z.object({
-  section: z.enum(["features", "values"], { required_error: "Pilih section" }),
+  section: z.enum(["features", "values", "programs", "quotes", "articles"], { required_error: "Pilih section" }),
   title: z.string().min(1, "Judul wajib diisi").max(100, "Maksimal 100 karakter"),
   description: z.string().min(1, "Deskripsi wajib diisi").max(255, "Maksimal 255 karakter"),
   icon: z.string().min(1, "Icon wajib diisi"),
@@ -54,18 +54,20 @@ interface HomepageContent {
 
 interface HomepageContentFormProps {
   content?: HomepageContent;
-  defaultSection?: "features" | "values";
+  defaultSection?: "features" | "values" | "programs" | "quotes" | "articles";
   onSuccess?: () => void;
   trigger?: React.ReactNode;
 }
 
 const iconOptions = [
+  { value: "BookOpen", label: "BookOpen (Kajian)" },
+  { value: "MessageCircle", label: "MessageCircle (Konsultasi)" },
+  { value: "BookMarked", label: "BookMarked (Tahsin)" },
+  { value: "Heart", label: "Heart (Sosial)" },
   { value: "Users", label: "Users (Anggota)" },
   { value: "Calendar", label: "Calendar (Jadwal)" },
   { value: "Wallet", label: "Wallet (Keuangan)" },
-  { value: "BookOpen", label: "BookOpen (Buku)" },
   { value: "Handshake", label: "Handshake (Jabat Tangan)" },
-  { value: "Heart", label: "Heart (Hati)" },
   { value: "Star", label: "Star (Bintang)" },
   { value: "Award", label: "Award (Penghargaan)" },
   { value: "Target", label: "Target" },
@@ -83,7 +85,7 @@ export function HomepageContentForm({ content, defaultSection, onSuccess, trigge
   const form = useForm<ContentFormData>({
     resolver: zodResolver(contentSchema),
     defaultValues: {
-      section: defaultSection || "features",
+      section: defaultSection || "programs",
       title: "",
       description: "",
       icon: "Star",
@@ -94,7 +96,7 @@ export function HomepageContentForm({ content, defaultSection, onSuccess, trigge
   useEffect(() => {
     if (content && open) {
       form.reset({
-        section: content.section as "features" | "values",
+        section: content.section as "features" | "values" | "programs" | "quotes" | "articles",
         title: content.title,
         description: content.description,
         icon: content.icon,
@@ -102,7 +104,7 @@ export function HomepageContentForm({ content, defaultSection, onSuccess, trigge
       });
     } else if (!content && open) {
       form.reset({
-        section: defaultSection || "features",
+        section: defaultSection || "programs",
         title: "",
         description: "",
         icon: "Star",
@@ -184,6 +186,9 @@ export function HomepageContentForm({ content, defaultSection, onSuccess, trigge
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="programs">Program Utama</SelectItem>
+                      <SelectItem value="quotes">Quote Islami</SelectItem>
+                      <SelectItem value="articles">Artikel</SelectItem>
                       <SelectItem value="features">Fitur Utama</SelectItem>
                       <SelectItem value="values">Tentang Kami</SelectItem>
                     </SelectContent>
