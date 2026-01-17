@@ -1,344 +1,389 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Helmet } from "react-helmet-async";
 import { 
-  Users, Calendar, Wallet, ArrowRight, Heart, BookOpen, Handshake, 
-  Star, Award, Target, Lightbulb, Shield, Zap, Pencil, Trash2, Plus,
-  LayoutDashboard, LogOut
+  Menu, X, BookOpen, MessageCircle, BookMarked, Heart,
+  Calendar, MapPin, User, ChevronRight, ExternalLink,
+  Phone, Instagram, Youtube, ArrowRight
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
-import { HomepageContentForm } from "@/components/forms/HomepageContentForm";
-import { DeleteDialog } from "@/components/forms/DeleteDialog";
-import logoSalim from "@/assets/logo-salim.png";
 
-interface HomepageContent {
-  id: string;
-  section: string;
-  title: string;
-  description: string;
-  icon: string;
-  sort_order: number;
-  is_active: boolean;
-}
+// Mobile Top Bar Component
+const TopBar = ({ onMenuClick, isMenuOpen }: { onMenuClick: () => void; isMenuOpen: boolean }) => (
+  <header className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border safe-area-top">
+    <div className="flex items-center justify-between px-4 h-14">
+      <h1 className="text-lg font-bold text-primary">Fokus Salim</h1>
+      <button
+        onClick={onMenuClick}
+        className="p-2 -mr-2 rounded-lg hover:bg-muted transition-colors"
+        aria-label="Menu"
+      >
+        {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+      </button>
+    </div>
+  </header>
+);
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  Users, Calendar, Wallet, Heart, BookOpen, Handshake, Star, Award, Target, Lightbulb, Shield, Zap,
+// Mobile Menu Component
+const MobileMenu = ({ isOpen, onClose, user }: { isOpen: boolean; onClose: () => void; user: any }) => {
+  if (!isOpen) return null;
+
+  const menuItems = [
+    { label: "Beranda", href: "#beranda" },
+    { label: "Program", href: "#program" },
+    { label: "Jadwal", href: "#jadwal" },
+    { label: "Konten", href: "#konten" },
+    { label: "Galeri", href: "#galeri" },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-40 pt-14 bg-background animate-fade-in">
+      <nav className="flex flex-col p-4 gap-1">
+        {menuItems.map((item) => (
+          <a
+            key={item.label}
+            href={item.href}
+            onClick={onClose}
+            className="px-4 py-3 text-base font-medium text-foreground hover:bg-muted rounded-lg transition-colors"
+          >
+            {item.label}
+          </a>
+        ))}
+        <div className="border-t border-border my-4" />
+        {user ? (
+          <Button asChild className="w-full">
+            <Link to="/dashboard" onClick={onClose}>
+              Dashboard
+            </Link>
+          </Button>
+        ) : (
+          <>
+            <Button variant="outline" asChild className="w-full">
+              <Link to="/login" onClick={onClose}>Masuk</Link>
+            </Button>
+            <Button asChild className="w-full mt-2">
+              <Link to="/register" onClick={onClose}>Daftar</Link>
+            </Button>
+          </>
+        )}
+      </nav>
+    </div>
+  );
 };
 
-const Index = () => {
-  const [features, setFeatures] = useState<HomepageContent[]>([]);
-  const [values, setValues] = useState<HomepageContent[]>([]);
+// Hero Section
+const HeroSection = () => (
+  <section id="beranda" className="pt-20 pb-10 px-4 bg-gradient-to-b from-primary/5 to-background">
+    <div className="max-w-sm mx-auto text-center">
+      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+        <BookOpen className="w-8 h-8 text-primary" />
+      </div>
+      <h2 className="text-2xl font-bold text-foreground mb-2">Fokus Salim</h2>
+      <p className="text-muted-foreground mb-6">
+        Komunitas dakwah & pembinaan umat
+      </p>
+      <Button size="lg" className="w-full max-w-xs" asChild>
+        <Link to="/register">
+          Gabung Komunitas
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Link>
+      </Button>
+    </div>
+  </section>
+);
+
+// Program Grid (2x2)
+const ProgramSection = () => {
+  const programs = [
+    { icon: BookOpen, title: "Kajian Rutin", desc: "Kajian mingguan" },
+    { icon: MessageCircle, title: "RKS", desc: "Ruang Konsultasi" },
+    { icon: BookMarked, title: "Tahsin & Tahfizh", desc: "Belajar Al-Qur'an" },
+    { icon: Heart, title: "Sosial", desc: "Kegiatan amal" },
+  ];
+
+  return (
+    <section id="program" className="py-8 px-4">
+      <h3 className="text-lg font-semibold mb-4 text-center">Program Utama</h3>
+      <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
+        {programs.map((program) => (
+          <div
+            key={program.title}
+            className="bg-card rounded-xl p-4 text-center border border-border card-hover"
+          >
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+              <program.icon className="w-5 h-5 text-primary" />
+            </div>
+            <h4 className="font-medium text-sm text-foreground">{program.title}</h4>
+            <p className="text-xs text-muted-foreground mt-0.5">{program.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+// Schedule Section
+interface Event {
+  id: string;
+  title: string;
+  event_date: string;
+  location?: string;
+  description?: string;
+}
+
+const ScheduleSection = () => {
+  const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isAdminOrPengurus, isAnggota, loading: roleLoading } = useUserRole();
-  const { user, signOut } = useAuth();
-  const { toast } = useToast();
-
-  const fetchContent = useCallback(async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("homepage_content")
-      .select("*")
-      .eq("is_active", true)
-      .order("sort_order");
-
-    if (error) {
-      console.error("Error fetching content:", error);
-    } else if (data) {
-      setFeatures(data.filter((item) => item.section === "features"));
-      setValues(data.filter((item) => item.section === "values"));
-    }
-    setLoading(false);
-  }, []);
 
   useEffect(() => {
-    fetchContent();
-  }, [fetchContent]);
+    const fetchEvents = async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const { data } = await supabase
+        .from("events")
+        .select("id, title, event_date, location, description")
+        .gte("event_date", today)
+        .order("event_date", { ascending: true })
+        .limit(3);
+      
+      setEvents(data || []);
+      setLoading(false);
+    };
+    fetchEvents();
+  }, []);
 
-  const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("homepage_content").delete().eq("id", id);
-    if (error) {
-      toast({ title: "Gagal", description: "Gagal menghapus konten.", variant: "destructive" });
-    } else {
-      toast({ title: "Berhasil", description: "Konten berhasil dihapus." });
-      fetchContent();
-    }
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
   };
 
-  const getIcon = (iconName: string) => iconMap[iconName] || Star;
+  return (
+    <section id="jadwal" className="py-8 px-4 bg-muted/30">
+      <div className="max-w-sm mx-auto">
+        <h3 className="text-lg font-semibold mb-4 text-center">Jadwal Terdekat</h3>
+        
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-card rounded-lg p-4 animate-pulse">
+                <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+                <div className="h-3 bg-muted rounded w-1/2" />
+              </div>
+            ))}
+          </div>
+        ) : events.length === 0 ? (
+          <p className="text-center text-muted-foreground text-sm py-4">
+            Belum ada jadwal kegiatan
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {events.map((event) => (
+              <div key={event.id} className="bg-card rounded-lg p-4 border border-border">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">
+                        {formatDate(event.event_date)}
+                      </span>
+                    </div>
+                    <h4 className="font-medium text-sm text-foreground truncate">
+                      {event.title}
+                    </h4>
+                    {event.location && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                        <MapPin className="w-3 h-3" />
+                        {event.location}
+                      </p>
+                    )}
+                  </div>
+                  <Button size="sm" variant="outline" className="shrink-0 text-xs h-8">
+                    Daftar
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
+// Content Section (Quote + Article)
+const ContentSection = () => (
+  <section id="konten" className="py-8 px-4">
+    <div className="max-w-sm mx-auto">
+      <h3 className="text-lg font-semibold mb-4 text-center">Konten Terbaru</h3>
+      
+      {/* Quote */}
+      <div className="bg-primary/5 rounded-xl p-5 mb-4 border border-primary/10">
+        <p className="text-sm text-foreground italic leading-relaxed">
+          "Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lainnya."
+        </p>
+        <p className="text-xs text-muted-foreground mt-2">— HR. Ahmad</p>
+      </div>
+
+      {/* Latest Article */}
+      <div className="bg-card rounded-xl p-4 border border-border">
+        <span className="text-xs font-medium text-primary">Artikel</span>
+        <h4 className="font-medium text-sm text-foreground mt-1 mb-2">
+          Keutamaan Menjaga Silaturahmi dalam Islam
+        </h4>
+        <p className="text-xs text-muted-foreground line-clamp-2">
+          Silaturahmi merupakan salah satu ibadah yang memiliki banyak keutamaan...
+        </p>
+      </div>
+
+      <Button variant="ghost" className="w-full mt-4 text-sm" asChild>
+        <a href="#" className="flex items-center justify-center gap-1">
+          Lihat Semua
+          <ChevronRight className="w-4 h-4" />
+        </a>
+      </Button>
+    </div>
+  </section>
+);
+
+// Gallery Section (Horizontal Scroll)
+const GallerySection = () => {
+  const images = [
+    "https://images.unsplash.com/photo-1584286595398-a59511e0649f?w=300&h=200&fit=crop",
+    "https://images.unsplash.com/photo-1609599006353-e629aaabfeae?w=300&h=200&fit=crop",
+    "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?w=300&h=200&fit=crop",
+    "https://images.unsplash.com/photo-1542816417-0983c9c9ad53?w=300&h=200&fit=crop",
+  ];
+
+  return (
+    <section id="galeri" className="py-8 bg-muted/30">
+      <h3 className="text-lg font-semibold mb-4 text-center px-4">Galeri Kegiatan</h3>
+      <div className="flex gap-3 overflow-x-auto px-4 pb-2 hide-scrollbar">
+        {images.map((img, index) => (
+          <div
+            key={index}
+            className="shrink-0 w-40 h-28 rounded-lg overflow-hidden bg-muted"
+          >
+            <img
+              src={img}
+              alt={`Kegiatan ${index + 1}`}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+// CTA Section
+const CTASection = () => (
+  <section className="py-10 px-4 bg-primary">
+    <div className="max-w-sm mx-auto text-center">
+      <h3 className="text-xl font-bold text-primary-foreground mb-2">
+        Bergabung Bersama Kami
+      </h3>
+      <p className="text-primary-foreground/80 text-sm mb-6">
+        Jadilah bagian dari komunitas dakwah
+      </p>
+      <div className="flex flex-col gap-3">
+        <Button size="lg" variant="secondary" className="w-full" asChild>
+          <Link to="/register">
+            Gabung Fokus Salim
+          </Link>
+        </Button>
+        <Button 
+          size="lg" 
+          variant="outline" 
+          className="w-full bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
+          asChild
+        >
+          <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer">
+            <Phone className="w-4 h-4 mr-2" />
+            Hubungi Admin
+          </a>
+        </Button>
+      </div>
+    </div>
+  </section>
+);
+
+// Mini Footer
+const MiniFooter = () => (
+  <footer className="py-6 px-4 bg-card border-t border-border safe-area-bottom">
+    <div className="max-w-sm mx-auto">
+      <div className="flex justify-center gap-4 mb-4">
+        <a
+          href="https://wa.me/6281234567890"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors"
+          aria-label="WhatsApp"
+        >
+          <Phone className="w-5 h-5 text-foreground" />
+        </a>
+        <a
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors"
+          aria-label="Instagram"
+        >
+          <Instagram className="w-5 h-5 text-foreground" />
+        </a>
+        <a
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors"
+          aria-label="YouTube"
+        >
+          <Youtube className="w-5 h-5 text-foreground" />
+        </a>
+      </div>
+      <p className="text-xs text-muted-foreground text-center">
+        © 2024 Fokus Salim. All rights reserved.
+      </p>
+    </div>
+  </footer>
+);
+
+// Main Index Component
+const Index = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   return (
     <>
       <Helmet>
-        <title>Salim - Aplikasi Komunitas Pengajian</title>
+        <title>Fokus Salim - Komunitas Dakwah & Pembinaan Umat</title>
         <meta
           name="description"
-          content="Salim adalah aplikasi untuk mengelola komunitas pengajian dengan fitur manajemen anggota, jadwal kegiatan, dan keuangan."
+          content="Fokus Salim adalah komunitas dakwah dan pembinaan umat yang fokus pada kajian Islam, konsultasi keislaman, pembinaan akhlak, dan kegiatan sosial."
         />
       </Helmet>
 
       <div className="min-h-screen bg-background">
-        {/* Header */}
-        <header className="bg-card border-b border-border sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3">
-              <img src={logoSalim} alt="Salim" className="w-10 h-10 object-contain" />
-              <div>
-                <h1 className="font-bold text-lg text-primary">Salim</h1>
-                <p className="text-xs text-muted-foreground">Komunitas Pengajian</p>
-              </div>
-            </Link>
-            <div className="flex items-center gap-2">
-              {user ? (
-                <>
-                  <Button variant="ghost" asChild>
-                    <Link to="/dashboard">
-                      <LayoutDashboard className="w-4 h-4 mr-2" />
-                      Dashboard
-                    </Link>
-                  </Button>
-                  {isAdminOrPengurus && (
-                    <Button variant="outline" asChild>
-                      <Link to="/dashboard/anggota">
-                        <Users className="w-4 h-4 mr-2" />
-                        Kelola Anggota
-                      </Link>
-                    </Button>
-                  )}
-                  <Button variant="ghost" size="icon" onClick={signOut} title="Keluar">
-                    <LogOut className="w-4 h-4" />
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button variant="ghost" asChild>
-                    <Link to="/login">Masuk</Link>
-                  </Button>
-                  <Button asChild>
-                    <Link to="/register">Daftar</Link>
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </header>
-
-        {/* Hero Section */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-20 lg:py-32">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center">
-              <img
-                src={logoSalim}
-                alt="Salim Logo"
-                className="w-24 h-24 mx-auto mb-8 object-contain"
-              />
-              <h1 className="text-4xl lg:text-5xl font-bold mb-6 text-foreground">
-                Selamat Datang di{" "}
-                <span className="text-primary">Salim</span>
-              </h1>
-              <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Aplikasi untuk mengelola kegiatan komunitas pengajian Anda. 
-                Kelola anggota, jadwal kegiatan, dan keuangan dengan mudah dalam satu platform.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" asChild>
-                  <Link to="/register">
-                    Mulai Sekarang
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </Link>
-                </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <Link to="/login">Masuk ke Akun</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section className="py-20 bg-card">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-12">
-              <div className="text-center flex-1">
-                <h2 className="text-3xl font-bold mb-4">Fitur Utama</h2>
-                <p className="text-muted-foreground max-w-2xl mx-auto">
-                  Semua yang Anda butuhkan untuk mengelola komunitas pengajian dalam satu aplikasi.
-                </p>
-              </div>
-              {isAdminOrPengurus && (
-                <HomepageContentForm defaultSection="features" onSuccess={fetchContent} />
-              )}
-            </div>
-            {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                {[1, 2, 3].map((i) => (
-                  <Card key={i} className="animate-pulse">
-                    <CardHeader className="text-center">
-                      <div className="w-14 h-14 rounded-full bg-muted mx-auto mb-4" />
-                      <div className="h-6 w-32 bg-muted rounded mx-auto" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-4 w-full bg-muted rounded" />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : features.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">Belum ada fitur yang ditambahkan.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                {features.map((feature) => {
-                  const IconComponent = getIcon(feature.icon);
-                  return (
-                    <Card key={feature.id} className="card-hover text-center relative group">
-                      {isAdminOrPengurus && (
-                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <HomepageContentForm
-                            content={feature}
-                            onSuccess={fetchContent}
-                            trigger={
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                            }
-                          />
-                          <DeleteDialog
-                            title="Hapus Konten?"
-                            description={`Konten "${feature.title}" akan dihapus secara permanen.`}
-                            onDelete={() => handleDelete(feature.id)}
-                            trigger={
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            }
-                          />
-                        </div>
-                      )}
-                      <CardHeader>
-                        <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                          <IconComponent className="w-7 h-7 text-primary" />
-                        </div>
-                        <CardTitle className="text-xl">{feature.title}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-muted-foreground">{feature.description}</p>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Values Section */}
-        <section className="py-20">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-12">
-              <div className="text-center flex-1">
-                <h2 className="text-3xl font-bold mb-4">Tentang Kami</h2>
-                <p className="text-muted-foreground max-w-2xl mx-auto">
-                  Salim hadir untuk memfasilitasi komunitas pengajian dalam menjalankan kegiatan keagamaan.
-                </p>
-              </div>
-              {isAdminOrPengurus && (
-                <HomepageContentForm defaultSection="values" onSuccess={fetchContent} />
-              )}
-            </div>
-            {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="animate-pulse text-center">
-                    <div className="w-16 h-16 rounded-full bg-muted mx-auto mb-4" />
-                    <div className="h-5 w-24 bg-muted rounded mx-auto mb-2" />
-                    <div className="h-4 w-32 bg-muted rounded mx-auto" />
-                  </div>
-                ))}
-              </div>
-            ) : values.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">Belum ada nilai yang ditambahkan.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                {values.map((value) => {
-                  const IconComponent = getIcon(value.icon);
-                  return (
-                    <div key={value.id} className="text-center relative group">
-                      {isAdminOrPengurus && (
-                        <div className="absolute top-0 right-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <HomepageContentForm
-                            content={value}
-                            onSuccess={fetchContent}
-                            trigger={
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                            }
-                          />
-                          <DeleteDialog
-                            title="Hapus Konten?"
-                            description={`Konten "${value.title}" akan dihapus secara permanen.`}
-                            onDelete={() => handleDelete(value.id)}
-                            trigger={
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            }
-                          />
-                        </div>
-                      )}
-                      <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-4">
-                        <IconComponent className="w-8 h-8 text-secondary" />
-                      </div>
-                      <h3 className="text-lg font-semibold mb-2">{value.title}</h3>
-                      <p className="text-muted-foreground">{value.description}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-20 bg-primary text-primary-foreground">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold mb-4">
-              Siap Bergabung dengan Kami?
-            </h2>
-            <p className="text-primary-foreground/80 mb-8 max-w-xl mx-auto">
-              Daftar sekarang dan mulai kelola komunitas pengajian Anda dengan lebih baik.
-            </p>
-            <Button size="lg" variant="secondary" asChild>
-              <Link to="/register">
-                Daftar Gratis
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
-            </Button>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="bg-card border-t border-border py-8">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <img src={logoSalim} alt="Salim" className="w-8 h-8 object-contain" />
-                <span className="font-semibold text-primary">Salim</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                © 2024 Salim - Komunitas Pengajian. All rights reserved.
-              </p>
-            </div>
-          </div>
-        </footer>
+        <TopBar 
+          onMenuClick={() => setIsMenuOpen(!isMenuOpen)} 
+          isMenuOpen={isMenuOpen} 
+        />
+        <MobileMenu 
+          isOpen={isMenuOpen} 
+          onClose={() => setIsMenuOpen(false)} 
+          user={user}
+        />
+        
+        <main>
+          <HeroSection />
+          <ProgramSection />
+          <ScheduleSection />
+          <ContentSection />
+          <GallerySection />
+          <CTASection />
+        </main>
+        
+        <MiniFooter />
       </div>
     </>
   );
