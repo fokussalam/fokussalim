@@ -35,7 +35,7 @@ const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, adminOnly: false },
   { label: "Anggota", href: "/dashboard/anggota", icon: Users, adminOnly: true },
   { label: "Kegiatan", href: "/dashboard/kegiatan", icon: Calendar, adminOnly: false },
-  { label: "Keuangan", href: "/dashboard/keuangan", icon: Wallet, adminOnly: true },
+  { label: "Keuangan", href: "/dashboard/keuangan", icon: Wallet, adminOnly: false },
   { label: "Kuis", href: "/dashboard/kuis", icon: Brain, adminOnly: false },
 ];
 
