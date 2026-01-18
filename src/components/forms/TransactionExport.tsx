@@ -29,6 +29,12 @@ const getCategoryLabel = (category: string) => {
     transport: "Transport",
     peralatan: "Peralatan",
     lainnya: "Lainnya",
+    kas_safa: "Kas Safa",
+    kas_hit: "Kas Hit",
+    kas_ips: "Kas IPS",
+    kas_qurban: "Kas Qurban",
+    kas_umroh: "Kas Umroh",
+    kas_dll: "Kas Lainnya",
   };
   return labels[category] || category;
 };
