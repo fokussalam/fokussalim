@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
@@ -11,16 +12,50 @@ import { TransactionForm } from "@/components/forms/TransactionForm";
 import { TransactionExport } from "@/components/forms/TransactionExport";
 import { TransactionUpload } from "@/components/forms/TransactionUpload";
 import { DeleteDialog } from "@/components/forms/DeleteDialog";
-import { TrendingUp, TrendingDown, Wallet, Receipt, Pencil, Trash2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Receipt, Pencil, Trash2, FolderOpen } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Transaction = Tables<"transactions">;
 
+const CATEGORY_CONFIG = {
+  semua: { label: "Semua", color: "bg-primary/10 text-primary" },
+  kas_safa: { label: "Kas Safa", color: "bg-blue-100 text-blue-700" },
+  kas_hit: { label: "Kas Hit", color: "bg-purple-100 text-purple-700" },
+  kas_ips: { label: "Kas IPS", color: "bg-orange-100 text-orange-700" },
+  kas_qurban: { label: "Kas Qurban", color: "bg-emerald-100 text-emerald-700" },
+  kas_umroh: { label: "Kas Umroh", color: "bg-cyan-100 text-cyan-700" },
+  kas_dll: { label: "Kas Lainnya", color: "bg-gray-100 text-gray-700" },
+  umum: { label: "Umum", color: "bg-amber-100 text-amber-700" },
+};
+
+const getCategoryLabel = (category: string) => {
+  const labels: Record<string, string> = {
+    iuran_bulanan: "Iuran Bulanan",
+    infaq: "Infaq",
+    donasi: "Donasi",
+    konsumsi: "Konsumsi",
+    transport: "Transport",
+    peralatan: "Peralatan",
+    lainnya: "Lainnya",
+    kas_safa: "Kas Safa",
+    kas_hit: "Kas Hit",
+    kas_ips: "Kas IPS",
+    kas_qurban: "Kas Qurban",
+    kas_umroh: "Kas Umroh",
+    kas_dll: "Kas Lainnya",
+  };
+  return labels[category] || category;
+};
+
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
+
 export default function Keuangan() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("semua");
   const { isAdminOrPengurus } = useUserRole();
   const { toast } = useToast();
 
@@ -46,16 +81,52 @@ export default function Keuangan() {
     }
   };
 
-  const formatCurrency = (amount: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount);
+  // Group transactions by category folder
+  const kasCategories = ["kas_safa", "kas_hit", "kas_ips", "kas_qurban", "kas_umroh", "kas_dll"];
+  
+  const filteredTransactions = useMemo(() => {
+    if (activeTab === "semua") return transactions;
+    if (activeTab === "umum") return transactions.filter((t) => !kasCategories.includes(t.category));
+    return transactions.filter((t) => t.category === activeTab);
+  }, [transactions, activeTab]);
 
-  const totalIncome = transactions.filter((t) => t.type === "pemasukan").reduce((sum, t) => sum + Number(t.amount), 0);
-  const totalExpense = transactions.filter((t) => t.type === "pengeluaran").reduce((sum, t) => sum + Number(t.amount), 0);
-  const balance = totalIncome - totalExpense;
+  // Calculate totals for each category
+  const categoryTotals = useMemo(() => {
+    const totals: Record<string, { income: number; expense: number; balance: number }> = {};
+    
+    // Initialize all categories
+    ["semua", "umum", ...kasCategories].forEach((cat) => {
+      totals[cat] = { income: 0, expense: 0, balance: 0 };
+    });
 
-  const getCategoryLabel = (category: string) => {
-    const labels: Record<string, string> = { iuran_bulanan: "Iuran Bulanan", infaq: "Infaq", donasi: "Donasi", konsumsi: "Konsumsi", transport: "Transport", peralatan: "Peralatan", lainnya: "Lainnya" };
-    return labels[category] || category;
-  };
+    transactions.forEach((t) => {
+      const amount = Number(t.amount);
+      const isIncome = t.type === "pemasukan";
+      
+      // Add to semua (all)
+      if (isIncome) totals.semua.income += amount;
+      else totals.semua.expense += amount;
+      
+      // Add to specific category
+      if (kasCategories.includes(t.category)) {
+        if (isIncome) totals[t.category].income += amount;
+        else totals[t.category].expense += amount;
+      } else {
+        // Add to umum (general)
+        if (isIncome) totals.umum.income += amount;
+        else totals.umum.expense += amount;
+      }
+    });
+
+    // Calculate balances
+    Object.keys(totals).forEach((key) => {
+      totals[key].balance = totals[key].income - totals[key].expense;
+    });
+
+    return totals;
+  }, [transactions]);
+
+  const currentTotals = categoryTotals[activeTab] || { income: 0, expense: 0, balance: 0 };
 
   return (
     <>
@@ -71,91 +142,146 @@ export default function Keuangan() {
             </div>
             {isAdminOrPengurus && (
               <div className="flex items-center gap-2 flex-shrink-0">
-                <TransactionExport transactions={transactions} />
+                <TransactionExport transactions={filteredTransactions} />
                 <TransactionUpload onSuccess={fetchTransactions} />
                 <TransactionForm onSuccess={fetchTransactions} />
               </div>
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Pemasukan</CardTitle>
-                <div className="p-2 rounded-lg bg-emerald-100"><TrendingUp className="w-4 h-4 text-emerald-600" /></div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-lg sm:text-2xl font-bold text-emerald-600 truncate">{loading ? "..." : formatCurrency(totalIncome)}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Pengeluaran</CardTitle>
-                <div className="p-2 rounded-lg bg-red-100"><TrendingDown className="w-4 h-4 text-red-600" /></div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-lg sm:text-2xl font-bold text-red-600 truncate">{loading ? "..." : formatCurrency(totalExpense)}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Saldo Kas</CardTitle>
-                <div className="p-2 rounded-lg bg-primary/10"><Wallet className="w-4 h-4 text-primary" /></div>
-              </CardHeader>
-              <CardContent>
-                <div className={`text-lg sm:text-2xl font-bold truncate ${balance >= 0 ? "text-primary" : "text-red-600"}`}>{loading ? "..." : formatCurrency(balance)}</div>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Category Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <div className="overflow-x-auto pb-2">
+              <TabsList className="inline-flex h-auto p-1 bg-muted/50">
+                {Object.entries(CATEGORY_CONFIG).map(([key, config]) => {
+                  const total = categoryTotals[key];
+                  const hasData = total && (total.income > 0 || total.expense > 0);
+                  return (
+                    <TabsTrigger
+                      key={key}
+                      value={key}
+                      className="flex flex-col items-center gap-1 px-3 py-2 min-w-[80px] data-[state=active]:bg-background"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <FolderOpen className="w-3.5 h-3.5" />
+                        <span className="text-xs font-medium whitespace-nowrap">{config.label}</span>
+                      </div>
+                      {hasData && (
+                        <span className={`text-[10px] font-medium ${total.balance >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                          {new Intl.NumberFormat("id-ID", { notation: "compact", compactDisplay: "short" }).format(total.balance)}
+                        </span>
+                      )}
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+            </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Receipt className="w-5 h-5" />Riwayat Transaksi</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="animate-pulse flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-muted" />
-                      <div className="flex-1 space-y-2"><div className="h-4 w-24 bg-muted rounded" /><div className="h-3 w-16 bg-muted rounded" /></div>
-                      <div className="h-4 w-20 bg-muted rounded" />
-                    </div>
-                  ))}
-                </div>
-              ) : transactions.length === 0 ? (
-                <div className="text-center py-8">
-                  <Wallet className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="font-semibold text-lg mb-2">Belum Ada Transaksi</h3>
-                  <p className="text-muted-foreground">Catat transaksi pertama komunitas Anda.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {transactions.map((transaction) => (
-                    <TransactionItem
-                      key={transaction.id}
-                      transaction={transaction}
-                      formatCurrency={formatCurrency}
-                      getCategoryLabel={getCategoryLabel}
-                      isAdminOrPengurus={isAdminOrPengurus}
-                      onEdit={fetchTransactions}
-                      onDelete={() => handleDelete(transaction.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Pemasukan</CardTitle>
+                  <div className="p-2 rounded-lg bg-emerald-100"><TrendingUp className="w-4 h-4 text-emerald-600" /></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-lg sm:text-2xl font-bold text-emerald-600 truncate">
+                    {loading ? "..." : formatCurrency(currentTotals.income)}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Pengeluaran</CardTitle>
+                  <div className="p-2 rounded-lg bg-red-100"><TrendingDown className="w-4 h-4 text-red-600" /></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-lg sm:text-2xl font-bold text-red-600 truncate">
+                    {loading ? "..." : formatCurrency(currentTotals.expense)}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Saldo {activeTab !== "semua" ? CATEGORY_CONFIG[activeTab as keyof typeof CATEGORY_CONFIG]?.label : "Total"}
+                  </CardTitle>
+                  <div className="p-2 rounded-lg bg-primary/10"><Wallet className="w-4 h-4 text-primary" /></div>
+                </CardHeader>
+                <CardContent>
+                  <div className={`text-lg sm:text-2xl font-bold truncate ${currentTotals.balance >= 0 ? "text-primary" : "text-red-600"}`}>
+                    {loading ? "..." : formatCurrency(currentTotals.balance)}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Transaction List */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Receipt className="w-5 h-5" />
+                  Riwayat Transaksi
+                  {activeTab !== "semua" && (
+                    <Badge variant="secondary" className={CATEGORY_CONFIG[activeTab as keyof typeof CATEGORY_CONFIG]?.color}>
+                      {CATEGORY_CONFIG[activeTab as keyof typeof CATEGORY_CONFIG]?.label}
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="animate-pulse flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-muted" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 w-24 bg-muted rounded" />
+                          <div className="h-3 w-16 bg-muted rounded" />
+                        </div>
+                        <div className="h-4 w-20 bg-muted rounded" />
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredTransactions.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Wallet className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="font-semibold text-lg mb-2">Belum Ada Transaksi</h3>
+                    <p className="text-muted-foreground">
+                      {activeTab === "semua"
+                        ? "Catat transaksi pertama komunitas Anda."
+                        : `Belum ada transaksi untuk ${CATEGORY_CONFIG[activeTab as keyof typeof CATEGORY_CONFIG]?.label}.`}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredTransactions.map((transaction) => (
+                      <TransactionItem
+                        key={transaction.id}
+                        transaction={transaction}
+                        isAdminOrPengurus={isAdminOrPengurus}
+                        onEdit={fetchTransactions}
+                        onDelete={() => handleDelete(transaction.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </Tabs>
         </div>
       </DashboardLayout>
     </>
   );
 }
 
-function TransactionItem({ transaction, formatCurrency, getCategoryLabel, isAdminOrPengurus, onEdit, onDelete }: {
+function TransactionItem({
+  transaction,
+  isAdminOrPengurus,
+  onEdit,
+  onDelete,
+}: {
   transaction: Transaction;
-  formatCurrency: (amount: number) => string;
-  getCategoryLabel: (category: string) => string;
   isAdminOrPengurus: boolean;
   onEdit: () => void;
   onDelete: () => Promise<void>;
