@@ -45,7 +45,10 @@ type Transaction = Tables<"transactions">;
 
 const transactionSchema = z.object({
   type: z.enum(["pemasukan", "pengeluaran"], { required_error: "Pilih jenis transaksi" }),
-  category: z.enum(["iuran_bulanan", "infaq", "donasi", "konsumsi", "transport", "peralatan", "lainnya"], { required_error: "Pilih kategori" }),
+  category: z.enum([
+    "iuran_bulanan", "infaq", "donasi", "konsumsi", "transport", "peralatan", "lainnya",
+    "kas_safa", "kas_hit", "kas_ips", "kas_qurban", "kas_umroh", "kas_dll"
+  ], { required_error: "Pilih kategori" }),
   amount: z.string().min(1, "Jumlah wajib diisi").refine((val) => {
     const num = parseInt(val.replace(/\D/g, ""));
     return !isNaN(num) && num > 0;
@@ -69,6 +72,12 @@ const incomeCategories = [
   { value: "iuran_bulanan", label: "Iuran Bulanan" },
   { value: "infaq", label: "Infaq" },
   { value: "donasi", label: "Donasi" },
+  { value: "kas_safa", label: "Kas Safa" },
+  { value: "kas_hit", label: "Kas Hit" },
+  { value: "kas_ips", label: "Kas IPS" },
+  { value: "kas_qurban", label: "Kas Qurban" },
+  { value: "kas_umroh", label: "Kas Umroh" },
+  { value: "kas_dll", label: "Kas Lainnya" },
   { value: "lainnya", label: "Lainnya" },
 ];
 
@@ -76,6 +85,12 @@ const expenseCategories = [
   { value: "konsumsi", label: "Konsumsi" },
   { value: "transport", label: "Transport" },
   { value: "peralatan", label: "Peralatan" },
+  { value: "kas_safa", label: "Kas Safa" },
+  { value: "kas_hit", label: "Kas Hit" },
+  { value: "kas_ips", label: "Kas IPS" },
+  { value: "kas_qurban", label: "Kas Qurban" },
+  { value: "kas_umroh", label: "Kas Umroh" },
+  { value: "kas_dll", label: "Kas Lainnya" },
   { value: "lainnya", label: "Lainnya" },
 ];
 

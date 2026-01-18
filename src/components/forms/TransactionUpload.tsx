@@ -25,7 +25,10 @@ interface UploadResult {
 }
 
 const VALID_TYPES = ["pemasukan", "pengeluaran"];
-const VALID_CATEGORIES = ["iuran_bulanan", "infaq", "donasi", "konsumsi", "transport", "peralatan", "lainnya"];
+const VALID_CATEGORIES = [
+  "iuran_bulanan", "infaq", "donasi", "konsumsi", "transport", "peralatan", "lainnya",
+  "kas_safa", "kas_hit", "kas_ips", "kas_qurban", "kas_umroh", "kas_dll"
+];
 
 export function TransactionUpload({ onSuccess }: TransactionUploadProps) {
   const [open, setOpen] = useState(false);
@@ -64,14 +67,22 @@ export function TransactionUpload({ onSuccess }: TransactionUploadProps) {
       ["1. tanggal - Format: YYYY-MM-DD (contoh: 2026-01-15)"],
       ["2. jenis - Pilihan: pemasukan atau pengeluaran"],
       ["3. kategori - Pilihan sesuai jenis:"],
-      ["   - Pemasukan: iuran_bulanan, infaq, donasi, lainnya"],
-      ["   - Pengeluaran: konsumsi, transport, peralatan, lainnya"],
+      ["   - Pemasukan: iuran_bulanan, infaq, donasi, kas_safa, kas_hit, kas_ips, kas_qurban, kas_umroh, kas_dll, lainnya"],
+      ["   - Pengeluaran: konsumsi, transport, peralatan, kas_safa, kas_hit, kas_ips, kas_qurban, kas_umroh, kas_dll, lainnya"],
       ["4. jumlah - Angka tanpa format (contoh: 100000)"],
       ["5. keterangan - Opsional, deskripsi transaksi"],
       [""],
+      ["KATEGORI KAS:"],
+      ["- kas_safa: Kas Safa"],
+      ["- kas_hit: Kas Hit"],
+      ["- kas_ips: Kas IPS"],
+      ["- kas_qurban: Kas Qurban"],
+      ["- kas_umroh: Kas Umroh"],
+      ["- kas_dll: Kas Lainnya"],
+      [""],
       ["PENTING:"],
       ["- Pastikan format tanggal benar"],
-      ["- Gunakan kategori yang sesuai dengan jenis transaksi"],
+      ["- Kategori kas bisa digunakan untuk pemasukan maupun pengeluaran"],
       ["- Jumlah harus berupa angka positif"],
     ];
 
@@ -179,8 +190,9 @@ export function TransactionUpload({ onSuccess }: TransactionUploadProps) {
           }
 
           // Validate category matches type
-          const incomeCategories = ["iuran_bulanan", "infaq", "donasi", "lainnya"];
-          const expenseCategories = ["konsumsi", "transport", "peralatan", "lainnya"];
+          const kasCategories = ["kas_safa", "kas_hit", "kas_ips", "kas_qurban", "kas_umroh", "kas_dll"];
+          const incomeCategories = ["iuran_bulanan", "infaq", "donasi", "lainnya", ...kasCategories];
+          const expenseCategories = ["konsumsi", "transport", "peralatan", "lainnya", ...kasCategories];
           
           if (jenis === "pemasukan" && !incomeCategories.includes(kategori)) {
             errors.push(`Baris ${rowNum}: Kategori ${kategori} tidak valid untuk pemasukan`);

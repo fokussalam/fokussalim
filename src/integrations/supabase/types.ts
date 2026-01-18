@@ -438,6 +438,12 @@ export type Database = {
         | "transport"
         | "peralatan"
         | "lainnya"
+        | "kas_safa"
+        | "kas_hit"
+        | "kas_ips"
+        | "kas_qurban"
+        | "kas_umroh"
+        | "kas_dll"
       transaction_type: "pemasukan" | "pengeluaran"
     }
     CompositeTypes: {
@@ -576,6 +582,12 @@ export const Constants = {
         "transport",
         "peralatan",
         "lainnya",
+        "kas_safa",
+        "kas_hit",
+        "kas_ips",
+        "kas_qurban",
+        "kas_umroh",
+        "kas_dll",
       ],
       transaction_type: ["pemasukan", "pengeluaran"],
     },
