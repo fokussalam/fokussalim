@@ -1,28 +1,83 @@
+import { useEffect, useState } from "react";
 import { MapPin, Phone, Mail, Clock, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
+import ContactSettingsForm from "@/components/forms/ContactSettingsForm";
+
+interface SiteSetting {
+  key: string;
+  value: string;
+}
 
 const ContactSection = () => {
+  const { user } = useAuth();
+  const { isAdmin, isPengurus } = useUserRole();
+  const [settings, setSettings] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const canEdit = user && (isAdmin || isPengurus);
+
+  const fetchSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select("key, value");
+
+      if (error) throw error;
+
+      if (data) {
+        const settingsMap: Record<string, string> = {};
+        data.forEach((item: SiteSetting) => {
+          settingsMap[item.key] = item.value;
+        });
+        setSettings(settingsMap);
+      }
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
   const contactInfo = [
     {
       icon: MapPin,
       title: "Alamat",
-      details: ["Jl. Pendidikan No. 123", "Kelurahan Berkah, Kec. Barokah", "Kota Islami, 12345"],
+      details: [
+        settings.contact_address_1 || "Jl. Pendidikan No. 123",
+        settings.contact_address_2 || "Kelurahan Berkah, Kec. Barokah",
+        settings.contact_address_3 || "Kota Islami, 12345",
+      ].filter(Boolean),
     },
     {
       icon: Phone,
       title: "Telepon",
-      details: ["+62 812-3456-7890", "+62 21-1234567"],
+      details: [
+        settings.contact_phone_1 || "+62 812-3456-7890",
+        settings.contact_phone_2,
+      ].filter(Boolean),
     },
     {
       icon: Mail,
       title: "Email",
-      details: ["info@tamanquran.id", "pendaftaran@tamanquran.id"],
+      details: [
+        settings.contact_email_1 || "info@tamanquran.id",
+        settings.contact_email_2,
+      ].filter(Boolean),
     },
     {
       icon: Clock,
       title: "Jam Operasional",
-      details: ["Senin - Jumat: 08:00 - 17:00", "Sabtu: 08:00 - 12:00"],
+      details: [
+        settings.contact_hours_1 || "Senin - Jumat: 08:00 - 17:00",
+        settings.contact_hours_2,
+      ].filter(Boolean),
     },
   ];
 
@@ -40,6 +95,11 @@ const ContactSection = () => {
           <p className="text-muted-foreground text-lg">
             Hubungi kami untuk informasi lebih lanjut mengenai program dan pendaftaran santri baru.
           </p>
+          {canEdit && (
+            <div className="mt-4">
+              <ContactSettingsForm onSuccess={fetchSettings} />
+            </div>
+          )}
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12">
