@@ -6,13 +6,15 @@ import {
   Menu, X, BookOpen, MessageCircle, BookMarked, Heart,
   Calendar, MapPin, User, ChevronRight, ExternalLink,
   Phone, Instagram, Youtube, ArrowRight, Pencil, Plus, Trash2,
-  Users, Wallet, Handshake, Star, Award, Target, Lightbulb, Shield, Zap
+  Users, Wallet, Handshake, Star, Award, Target, Lightbulb, Shield, Zap, Image
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { HomepageContentForm } from "@/components/forms/HomepageContentForm";
+import { GalleryForm } from "@/components/forms/GalleryForm";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -497,33 +499,184 @@ const ContentSection = ({
   );
 };
 
+// Gallery Image Interface
+interface GalleryImage {
+  id: string;
+  title: string | null;
+  image_url: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
 // Gallery Section (Horizontal Scroll)
-const GallerySection = () => {
-  const images = [
+const GallerySection = ({ isAdmin }: { isAdmin: boolean }) => {
+  const [images, setImages] = useState<GalleryImage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editData, setEditData] = useState<GalleryImage | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const fetchImages = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from("gallery_images")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+    
+    if (!error && data) {
+      setImages(data);
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchImages();
+  }, []);
+
+  const handleEdit = (image: GalleryImage) => {
+    setEditData(image);
+    setShowForm(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    
+    try {
+      const { error } = await supabase
+        .from("gallery_images")
+        .delete()
+        .eq("id", deleteId);
+      
+      if (error) throw error;
+      toast.success("Gambar berhasil dihapus");
+      fetchImages();
+    } catch (error: any) {
+      toast.error(error.message || "Gagal menghapus gambar");
+    } finally {
+      setDeleteId(null);
+    }
+  };
+
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setEditData(null);
+  };
+
+  // Fallback images when database is empty
+  const fallbackImages = [
     "https://images.unsplash.com/photo-1584286595398-a59511e0649f?w=300&h=200&fit=crop",
     "https://images.unsplash.com/photo-1609599006353-e629aaabfeae?w=300&h=200&fit=crop",
     "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?w=300&h=200&fit=crop",
     "https://images.unsplash.com/photo-1542816417-0983c9c9ad53?w=300&h=200&fit=crop",
   ];
 
+  const displayImages = images.length > 0 ? images : fallbackImages.map((url, i) => ({
+    id: `fallback-${i}`,
+    title: null,
+    image_url: url,
+    sort_order: i,
+    is_active: true
+  }));
+
   return (
     <section id="galeri" className="py-8 bg-muted/30">
-      <h3 className="text-lg font-semibold mb-4 text-center px-4">Galeri Kegiatan</h3>
-      <div className="flex gap-3 overflow-x-auto px-4 pb-2 hide-scrollbar">
-        {images.map((img, index) => (
-          <div
-            key={index}
-            className="shrink-0 w-40 h-28 rounded-lg overflow-hidden bg-muted"
+      <div className="flex items-center justify-between px-4 mb-4">
+        <h3 className="text-lg font-semibold">Galeri Kegiatan</h3>
+        {isAdmin && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowForm(true)}
+            className="gap-1"
           >
-            <img
-              src={img}
-              alt={`Kegiatan ${index + 1}`}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          </div>
-        ))}
+            <Plus className="h-4 w-4" />
+            Tambah
+          </Button>
+        )}
       </div>
+      
+      {isLoading ? (
+        <div className="flex gap-3 overflow-x-auto px-4 pb-2 hide-scrollbar">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="shrink-0 w-40 h-28 rounded-lg bg-muted animate-pulse"
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="flex gap-3 overflow-x-auto px-4 pb-2 hide-scrollbar">
+          {displayImages.map((img) => (
+            <div
+              key={img.id}
+              className="shrink-0 w-40 h-28 rounded-lg overflow-hidden bg-muted relative group"
+            >
+              <img
+                src={img.image_url}
+                alt={img.title || "Galeri Kegiatan"}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+              {isAdmin && !img.id.startsWith("fallback") && (
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleEdit(img)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setDeleteId(img.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+              {img.title && (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                  <p className="text-xs text-white truncate">{img.title}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {images.length === 0 && !isLoading && isAdmin && (
+        <p className="text-center text-sm text-muted-foreground mt-2 px-4">
+          Belum ada gambar. Klik "Tambah" untuk menambahkan gambar galeri.
+        </p>
+      )}
+
+      <GalleryForm
+        open={showForm}
+        onOpenChange={handleCloseForm}
+        editData={editData}
+        onSuccess={fetchImages}
+      />
+
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Gambar</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus gambar ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 };
@@ -646,7 +799,7 @@ const Index = () => {
           <ProgramSection isAdmin={isAdminOrPengurus} content={homepageContent} onRefresh={fetchContent} />
           <ScheduleSection />
           <ContentSection isAdmin={isAdminOrPengurus} content={homepageContent} onRefresh={fetchContent} />
-          <GallerySection />
+          <GallerySection isAdmin={isAdminOrPengurus} />
           <CTASection />
         </main>
         
