@@ -683,36 +683,95 @@ const GallerySection = ({ isAdmin }: { isAdmin: boolean }) => {
 };
 
 // CTA Section
-const CTASection = () => (
-  <section className="py-10 px-4 bg-primary">
-    <div className="max-w-sm mx-auto text-center">
-      <h3 className="text-xl font-bold text-primary-foreground mb-2">
-        Bergabung Bersama Kami
-      </h3>
-      <p className="text-primary-foreground/80 text-sm mb-6">
-        Jadilah bagian dari komunitas dakwah
-      </p>
-      <div className="flex flex-col gap-3">
-        <Button size="lg" variant="secondary" className="w-full" asChild>
-          <Link to="/register">
-            Gabung Fokus Salim
-          </Link>
-        </Button>
+const CTASection = ({ isAdmin, whatsappNumber, onRefresh }: { isAdmin: boolean; whatsappNumber: string; onRefresh: () => void }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [newNumber, setNewNumber] = useState(whatsappNumber);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    const { error } = await supabase
+      .from("site_settings")
+      .update({ value: newNumber })
+      .eq("key", "whatsapp_number");
+    
+    if (error) {
+      toast.error("Gagal menyimpan nomor");
+    } else {
+      toast.success("Nomor berhasil diperbarui");
+      onRefresh();
+      setIsEditing(false);
+    }
+    setSaving(false);
+  };
+
+  return (
+    <section className="py-10 px-4 bg-primary relative">
+      {isAdmin && (
         <Button 
-          size="lg" 
-          variant="outline" 
-          className="w-full bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
-          asChild
+          size="icon" 
+          variant="ghost" 
+          className="absolute top-2 right-2 h-8 w-8 text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
+          onClick={() => setIsEditing(true)}
         >
-          <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer">
-            <Phone className="w-4 h-4 mr-2" />
-            Hubungi Admin
-          </a>
+          <Pencil className="w-4 h-4" />
         </Button>
+      )}
+      
+      <div className="max-w-sm mx-auto text-center">
+        <h3 className="text-xl font-bold text-primary-foreground mb-2">
+          Bergabung Bersama Kami
+        </h3>
+        <p className="text-primary-foreground/80 text-sm mb-6">
+          Jadilah bagian dari komunitas dakwah
+        </p>
+        <div className="flex flex-col gap-3">
+          <Button size="lg" variant="secondary" className="w-full" asChild>
+            <Link to="/register">
+              Gabung Fokus Salim
+            </Link>
+          </Button>
+          <Button 
+            size="lg" 
+            variant="outline" 
+            className="w-full bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
+            asChild
+          >
+            <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noopener noreferrer">
+              <Phone className="w-4 h-4 mr-2" />
+              Hubungi Admin
+            </a>
+          </Button>
+        </div>
       </div>
-    </div>
-  </section>
-);
+
+      {/* Edit Dialog */}
+      <AlertDialog open={isEditing} onOpenChange={setIsEditing}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Edit Nomor WhatsApp</AlertDialogTitle>
+            <AlertDialogDescription>
+              Masukkan nomor WhatsApp admin (format: 628xxxxx)
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <input
+            type="text"
+            value={newNumber}
+            onChange={(e) => setNewNumber(e.target.value)}
+            placeholder="6281234567890"
+            className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? "Menyimpan..." : "Simpan"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </section>
+  );
+};
 
 // Bottom Navigation Bar
 const BottomNavBar = ({ user, onSignOut }: { user: any; onSignOut: () => void }) => {
@@ -829,6 +888,7 @@ const MiniFooter = () => (
 const Index = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [homepageContent, setHomepageContent] = useState<HomepageContent[]>([]);
+  const [whatsappNumber, setWhatsappNumber] = useState("6281234567890");
   const { user, signOut } = useAuth();
   const { isAdminOrPengurus } = useUserRole();
 
@@ -846,8 +906,20 @@ const Index = () => {
     setHomepageContent(data || []);
   };
 
+  const fetchWhatsappNumber = async () => {
+    const { data } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "whatsapp_number")
+      .single();
+    if (data?.value) {
+      setWhatsappNumber(data.value);
+    }
+  };
+
   useEffect(() => {
     fetchContent();
+    fetchWhatsappNumber();
   }, []);
 
   return (
@@ -877,7 +949,7 @@ const Index = () => {
           <ScheduleSection />
           <ContentSection isAdmin={isAdminOrPengurus} content={homepageContent} onRefresh={fetchContent} />
           <GallerySection isAdmin={isAdminOrPengurus} />
-          <CTASection />
+          <CTASection isAdmin={isAdminOrPengurus} whatsappNumber={whatsappNumber} onRefresh={fetchWhatsappNumber} />
         </main>
         
         <MiniFooter />
