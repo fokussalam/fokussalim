@@ -15,6 +15,7 @@ import Kegiatan from "./pages/dashboard/Kegiatan";
 import Keuangan from "./pages/dashboard/Keuangan";
 import Kuis from "./pages/dashboard/Kuis";
 import Profil from "./pages/dashboard/Profil";
+import Pengaturan from "./pages/dashboard/Pengaturan";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -76,6 +77,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Profil />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/pengaturan"
+                element={
+                  <ProtectedRoute>
+                    <Pengaturan />
                   </ProtectedRoute>
                 }
               />
