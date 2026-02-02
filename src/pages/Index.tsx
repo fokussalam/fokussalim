@@ -32,7 +32,10 @@ import {
 const TopBar = ({ onMenuClick, isMenuOpen }: { onMenuClick: () => void; isMenuOpen: boolean }) => (
   <header className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border safe-area-top">
     <div className="flex items-center justify-between px-4 h-14">
-      <h1 className="text-lg font-bold text-primary">Fokus Salim</h1>
+      <div className="flex items-center gap-2">
+        <div className="w-2 h-6 bg-red-accent rounded-full" />
+        <h1 className="text-lg font-bold text-foreground">Fokus <span className="text-red-accent">Salim</span></h1>
+      </div>
       <button
         onClick={onMenuClick}
         className="p-2 -mr-2 rounded-lg hover:bg-muted transition-colors"
@@ -93,16 +96,16 @@ const MobileMenu = ({ isOpen, onClose, user }: { isOpen: boolean; onClose: () =>
 
 // Hero Section
 const HeroSection = () => (
-  <section id="beranda" className="pt-20 pb-10 px-4 bg-gradient-to-b from-primary/5 to-background">
+  <section id="beranda" className="pt-20 pb-10 px-4 bg-gradient-to-b from-red-accent/5 to-background">
     <div className="max-w-sm mx-auto text-center">
-      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-        <BookOpen className="w-8 h-8 text-primary" />
+      <div className="w-16 h-16 rounded-full bg-red-accent/10 flex items-center justify-center mx-auto mb-4 ring-2 ring-red-accent/20">
+        <BookOpen className="w-8 h-8 text-red-accent" />
       </div>
-      <h2 className="text-2xl font-bold text-foreground mb-2">Fokus Salim</h2>
+      <h2 className="text-2xl font-bold text-foreground mb-2">Fokus <span className="text-red-accent">Salim</span></h2>
       <p className="text-muted-foreground mb-6">
         Komunitas dakwah & pembinaan umat
       </p>
-      <Button size="lg" className="w-full max-w-xs" asChild>
+      <Button size="lg" className="w-full max-w-xs bg-red-accent hover:bg-red-accent/90" asChild>
         <Link to="/register">
           Gabung Komunitas
           <ArrowRight className="w-4 h-4 ml-2" />
@@ -831,12 +834,12 @@ const BottomNavBar = ({ user, onSignOut }: { user: any; onSignOut: () => void })
         ) : (
           <Link
             to="/login"
-            className="flex flex-col items-center justify-center flex-1 h-full gap-1 text-muted-foreground hover:text-primary transition-colors"
+            className="flex flex-col items-center justify-center flex-1 h-full gap-1 text-red-accent hover:text-red-accent/80 transition-colors"
           >
-            <div className="p-1.5 rounded-xl">
-              <LogIn className="w-5 h-5 stroke-[1.5]" />
+            <div className="p-1.5 rounded-xl bg-red-accent/10">
+              <LogIn className="w-5 h-5 stroke-[2]" />
             </div>
-            <span className="text-[10px] font-medium">Masuk</span>
+            <span className="text-[10px] font-semibold">Masuk</span>
           </Link>
         )}
       </div>

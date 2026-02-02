@@ -68,7 +68,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-sm border-b border-border px-4 py-3 safe-area-top">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logoSalim} alt="Salim" className="h-8 w-auto object-contain" />
+            <div className="w-1.5 h-6 bg-red-accent rounded-full" />
             <div className="hidden sm:block">
               <h1 className="text-sm font-semibold text-foreground leading-tight">{currentPage}</h1>
             </div>
@@ -136,14 +136,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   to={item.href}
                   className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${
                     isActive
-                      ? "text-primary"
+                      ? "text-red-accent"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  <div className={`p-1.5 rounded-xl transition-all ${isActive ? "bg-primary/10" : ""}`}>
-                    <item.icon className={`w-5 h-5 ${isActive ? "stroke-[2.5]" : "stroke-[1.5]"}`} />
+                  <div className={`p-1.5 rounded-xl transition-all ${isActive ? "bg-red-accent/10" : ""}`}>
+                    <item.icon className={`w-5 h-5 ${isActive ? "stroke-[2.5] text-red-accent" : "stroke-[1.5]"}`} />
                   </div>
-                  <span className={`text-[10px] font-medium ${isActive ? "font-semibold" : ""}`}>
+                  <span className={`text-[10px] font-medium ${isActive ? "font-semibold text-red-accent" : ""}`}>
                     {item.label}
                   </span>
                 </Link>
