@@ -6,6 +6,7 @@ import {
   Menu, X, BookOpen, MessageCircle, BookMarked, Heart,
   Calendar, MapPin, User, ChevronRight, ExternalLink,
   Phone, Instagram, Youtube, ArrowRight, Pencil, Plus, Trash2,
+  Home, LogIn, LogOut, LayoutDashboard,
   Users, Wallet, Handshake, Star, Award, Target, Lightbulb, Shield, Zap, Image
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -713,9 +714,80 @@ const CTASection = () => (
   </section>
 );
 
+// Bottom Navigation Bar
+const BottomNavBar = ({ user, onSignOut }: { user: any; onSignOut: () => void }) => {
+  const navItems = user
+    ? [
+        { icon: Home, label: "Beranda", href: "#beranda" },
+        { icon: BookOpen, label: "Program", href: "#program" },
+        { icon: Calendar, label: "Jadwal", href: "#jadwal" },
+        { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard", isLink: true },
+      ]
+    : [
+        { icon: Home, label: "Beranda", href: "#beranda" },
+        { icon: BookOpen, label: "Program", href: "#program" },
+        { icon: Calendar, label: "Jadwal", href: "#jadwal" },
+      ];
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border safe-area-bottom">
+      <div className="flex items-center justify-around h-16">
+        {navItems.map((item) => (
+          item.isLink ? (
+            <Link
+              key={item.label}
+              to={item.href}
+              className="flex flex-col items-center justify-center flex-1 h-full gap-1 text-muted-foreground hover:text-primary transition-colors"
+            >
+              <div className="p-1.5 rounded-xl">
+                <item.icon className="w-5 h-5 stroke-[1.5]" />
+              </div>
+              <span className="text-[10px] font-medium">{item.label}</span>
+            </Link>
+          ) : (
+            <a
+              key={item.label}
+              href={item.href}
+              className="flex flex-col items-center justify-center flex-1 h-full gap-1 text-muted-foreground hover:text-primary transition-colors"
+            >
+              <div className="p-1.5 rounded-xl">
+                <item.icon className="w-5 h-5 stroke-[1.5]" />
+              </div>
+              <span className="text-[10px] font-medium">{item.label}</span>
+            </a>
+          )
+        ))}
+        
+        {/* Login/Logout Button */}
+        {user ? (
+          <button
+            onClick={onSignOut}
+            className="flex flex-col items-center justify-center flex-1 h-full gap-1 text-muted-foreground hover:text-destructive transition-colors"
+          >
+            <div className="p-1.5 rounded-xl">
+              <LogOut className="w-5 h-5 stroke-[1.5]" />
+            </div>
+            <span className="text-[10px] font-medium">Keluar</span>
+          </button>
+        ) : (
+          <Link
+            to="/login"
+            className="flex flex-col items-center justify-center flex-1 h-full gap-1 text-muted-foreground hover:text-primary transition-colors"
+          >
+            <div className="p-1.5 rounded-xl">
+              <LogIn className="w-5 h-5 stroke-[1.5]" />
+            </div>
+            <span className="text-[10px] font-medium">Masuk</span>
+          </Link>
+        )}
+      </div>
+    </nav>
+  );
+};
+
 // Mini Footer
 const MiniFooter = () => (
-  <footer className="py-6 px-4 bg-card border-t border-border safe-area-bottom">
+  <footer className="py-6 px-4 pb-20 bg-card border-t border-border">
     <div className="max-w-sm mx-auto">
       <div className="flex justify-center gap-4 mb-4">
         <a
@@ -757,8 +829,13 @@ const MiniFooter = () => (
 const Index = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [homepageContent, setHomepageContent] = useState<HomepageContent[]>([]);
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { isAdminOrPengurus } = useUserRole();
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Berhasil keluar");
+  };
 
   const fetchContent = async () => {
     const { data } = await supabase
@@ -804,6 +881,7 @@ const Index = () => {
         </main>
         
         <MiniFooter />
+        <BottomNavBar user={user} onSignOut={handleSignOut} />
       </div>
     </>
   );
