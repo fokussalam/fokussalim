@@ -142,7 +142,7 @@ export default function Keuangan() {
             </div>
             {isAdminOrPengurus && (
               <div className="flex items-center gap-2 flex-shrink-0">
-                <TransactionExport transactions={filteredTransactions} />
+                <TransactionExport transactions={filteredTransactions} allTransactions={transactions} />
                 <TransactionUpload onSuccess={fetchTransactions} />
                 <TransactionForm onSuccess={fetchTransactions} />
               </div>
