@@ -105,10 +105,10 @@ const HeroSection = () => (
       <p className="text-muted-foreground mb-6">
         Komunitas dakwah & pembinaan umat
       </p>
-      <Button size="lg" className="w-full max-w-xs bg-red-accent hover:bg-red-accent/90" asChild>
+      <Button size="lg" className="w-full max-w-xs bg-red-accent hover:bg-red-accent/90 animate-pulse-glow" asChild>
         <Link to="/register">
           Gabung Komunitas
-          <ArrowRight className="w-4 h-4 ml-2" />
+          <ArrowRight className="w-4 h-4 ml-2 animate-bounce-subtle" />
         </Link>
       </Button>
     </div>
@@ -836,8 +836,8 @@ const BottomNavBar = ({ user, onSignOut }: { user: any; onSignOut: () => void })
             to="/login"
             className="flex flex-col items-center justify-center flex-1 h-full gap-1 text-red-accent hover:text-red-accent/80 transition-colors"
           >
-            <div className="p-1.5 rounded-xl bg-red-accent/10">
-              <LogIn className="w-5 h-5 stroke-[2]" />
+            <div className="p-1.5 rounded-xl bg-red-accent/10 animate-pulse-glow">
+              <LogIn className="w-5 h-5 stroke-[2] animate-bounce-subtle" />
             </div>
             <span className="text-[10px] font-semibold">Masuk</span>
           </Link>
