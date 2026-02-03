@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet-async";
@@ -512,13 +512,15 @@ interface GalleryImage {
   is_active: boolean;
 }
 
-// Gallery Section (Horizontal Scroll)
+// Gallery Section (Auto-Scroll Carousel)
 const GallerySection = ({ isAdmin }: { isAdmin: boolean }) => {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState<GalleryImage | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchImages = async () => {
     setIsLoading(true);
@@ -537,6 +539,38 @@ const GallerySection = ({ isAdmin }: { isAdmin: boolean }) => {
   useEffect(() => {
     fetchImages();
   }, []);
+
+  // Auto-scroll effect
+  useEffect(() => {
+    if (isLoading || isPaused) return;
+    
+    const container = scrollRef.current;
+    if (!container) return;
+
+    let animationId: number;
+    let scrollPosition = 0;
+    const scrollSpeed = 0.5; // pixels per frame
+
+    const scroll = () => {
+      if (!container || isPaused) return;
+      
+      scrollPosition += scrollSpeed;
+      
+      // Reset to start when reaching the end
+      if (scrollPosition >= container.scrollWidth - container.clientWidth) {
+        scrollPosition = 0;
+      }
+      
+      container.scrollLeft = scrollPosition;
+      animationId = requestAnimationFrame(scroll);
+    };
+
+    animationId = requestAnimationFrame(scroll);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+    };
+  }, [isLoading, isPaused]);
 
   const handleEdit = (image: GalleryImage) => {
     setEditData(image);
@@ -583,6 +617,9 @@ const GallerySection = ({ isAdmin }: { isAdmin: boolean }) => {
     is_active: true
   }));
 
+  // Duplicate images for seamless looping
+  const loopedImages = [...displayImages, ...displayImages];
+
   return (
     <section id="galeri" className="py-8 bg-muted/30">
       <div className="flex items-center justify-between px-4 mb-4">
@@ -610,10 +647,17 @@ const GallerySection = ({ isAdmin }: { isAdmin: boolean }) => {
           ))}
         </div>
       ) : (
-        <div className="flex gap-3 overflow-x-auto px-4 pb-2 hide-scrollbar">
-          {displayImages.map((img) => (
+        <div 
+          ref={scrollRef}
+          className="flex gap-3 overflow-x-auto px-4 pb-2 hide-scrollbar"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          onTouchStart={() => setIsPaused(true)}
+          onTouchEnd={() => setTimeout(() => setIsPaused(false), 2000)}
+        >
+          {loopedImages.map((img, idx) => (
             <div
-              key={img.id}
+              key={`${img.id}-${idx}`}
               className="shrink-0 w-40 h-28 rounded-lg overflow-hidden bg-muted relative group"
             >
               <img
@@ -622,7 +666,7 @@ const GallerySection = ({ isAdmin }: { isAdmin: boolean }) => {
                 className="w-full h-full object-cover"
                 loading="lazy"
               />
-              {isAdmin && !img.id.startsWith("fallback") && (
+              {isAdmin && !img.id.startsWith("fallback") && idx < displayImages.length && (
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <Button
                     variant="secondary"
