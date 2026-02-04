@@ -115,8 +115,8 @@ const MobileMenu = ({ isOpen, onClose, user }: { isOpen: boolean; onClose: () =>
 const HeroSection = () => (
   <section id="beranda" className="pt-24 pb-10 px-4 bg-gradient-to-b from-red-accent/5 to-background">
     <div className="max-w-sm mx-auto text-center">
-      <div className="w-20 h-20 rounded-full overflow-hidden mx-auto mb-4 ring-2 ring-red-accent/30 shadow-lg">
-        <img src={logoSalim} alt="Logo Salim" className="w-full h-full object-cover" />
+      <div className="w-24 h-24 mx-auto mb-4">
+        <img src={logoSalim} alt="Logo Salim" className="w-full h-full object-contain" />
       </div>
       <h2 className="text-2xl font-bold text-foreground mb-2">Fokus <span className="text-red-accent">Salim</span></h2>
       <p className="text-muted-foreground mb-6">
