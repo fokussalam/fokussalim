@@ -28,25 +28,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-// Running Text Marquee Component
-const RunningTextBanner = () => (
-  <div className="fixed top-0 left-0 right-0 z-[60] bg-primary overflow-hidden safe-area-top">
-    <div className="flex animate-marquee whitespace-nowrap py-1.5">
-      {[...Array(4)].map((_, i) => (
-        <span key={i} className="mx-8 text-sm font-medium text-primary-foreground flex items-center gap-2">
-          <Star className="w-3 h-3" />
-          Selamat Datang di Fokus Salim
-          <Star className="w-3 h-3" />
-          Komunitas Dakwah & Pembinaan Umat
-        </span>
-      ))}
-    </div>
-  </div>
-);
-
 // Mobile Top Bar Component
 const TopBar = ({ onMenuClick, isMenuOpen }: { onMenuClick: () => void; isMenuOpen: boolean }) => (
-  <header className="fixed top-[30px] left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
+  <header className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border safe-area-top">
     <div className="flex items-center justify-between px-4 h-14">
       <div className="flex items-center gap-2">
         <div className="w-2 h-6 bg-red-accent rounded-full" />
@@ -61,6 +45,22 @@ const TopBar = ({ onMenuClick, isMenuOpen }: { onMenuClick: () => void; isMenuOp
       </button>
     </div>
   </header>
+);
+
+// Running Text Marquee Component (below TopBar)
+const RunningTextBanner = () => (
+  <div className="fixed top-14 left-0 right-0 z-40 bg-primary overflow-hidden">
+    <div className="flex animate-marquee whitespace-nowrap py-1.5">
+      {[...Array(4)].map((_, i) => (
+        <span key={i} className="mx-8 text-sm font-medium text-primary-foreground flex items-center gap-2">
+          <Star className="w-3 h-3" />
+          Selamat Datang di Fokus Salim
+          <Star className="w-3 h-3" />
+          Komunitas Dakwah & Pembinaan Umat
+        </span>
+      ))}
+    </div>
+  </div>
 );
 
 // Mobile Menu Component
