@@ -658,7 +658,7 @@ const GallerySection = ({ isAdmin }: { isAdmin: boolean }) => {
           {loopedImages.map((img, idx) => (
             <div
               key={`${img.id}-${idx}`}
-              className="shrink-0 w-40 h-28 rounded-lg overflow-hidden bg-muted relative group"
+              className="shrink-0 w-48 h-48 rounded-xl overflow-hidden bg-muted relative group shadow-sm"
             >
               <img
                 src={img.image_url}
