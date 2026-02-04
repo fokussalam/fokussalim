@@ -28,9 +28,25 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+// Running Text Marquee Component
+const RunningTextBanner = () => (
+  <div className="fixed top-0 left-0 right-0 z-[60] bg-primary overflow-hidden safe-area-top">
+    <div className="flex animate-marquee whitespace-nowrap py-1.5">
+      {[...Array(4)].map((_, i) => (
+        <span key={i} className="mx-8 text-sm font-medium text-primary-foreground flex items-center gap-2">
+          <Star className="w-3 h-3" />
+          Selamat Datang di Fokus Salim
+          <Star className="w-3 h-3" />
+          Komunitas Dakwah & Pembinaan Umat
+        </span>
+      ))}
+    </div>
+  </div>
+);
+
 // Mobile Top Bar Component
 const TopBar = ({ onMenuClick, isMenuOpen }: { onMenuClick: () => void; isMenuOpen: boolean }) => (
-  <header className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border safe-area-top">
+  <header className="fixed top-[30px] left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
     <div className="flex items-center justify-between px-4 h-14">
       <div className="flex items-center gap-2">
         <div className="w-2 h-6 bg-red-accent rounded-full" />
@@ -96,7 +112,7 @@ const MobileMenu = ({ isOpen, onClose, user }: { isOpen: boolean; onClose: () =>
 
 // Hero Section
 const HeroSection = () => (
-  <section id="beranda" className="pt-20 pb-10 px-4 bg-gradient-to-b from-red-accent/5 to-background">
+  <section id="beranda" className="pt-24 pb-10 px-4 bg-gradient-to-b from-red-accent/5 to-background">
     <div className="max-w-sm mx-auto text-center">
       <div className="w-16 h-16 rounded-full bg-red-accent/10 flex items-center justify-center mx-auto mb-4 ring-2 ring-red-accent/20">
         <BookOpen className="w-8 h-8 text-red-accent" />
@@ -980,6 +996,7 @@ const Index = () => {
       </Helmet>
 
       <div className="min-h-screen bg-background">
+        <RunningTextBanner />
         <TopBar 
           onMenuClick={() => setIsMenuOpen(!isMenuOpen)} 
           isMenuOpen={isMenuOpen} 
