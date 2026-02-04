@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ScheduledQuizList } from "@/components/quiz/ScheduledQuizList";
+import { QuizArchive } from "@/components/quiz/QuizArchive";
 import { 
   Brain, 
   Loader2, 
@@ -23,7 +24,8 @@ import {
   Trophy,
   Lightbulb,
   Sparkles,
-  Calendar
+  Calendar,
+  History
 } from "lucide-react";
 
 interface Question {
@@ -424,14 +426,18 @@ export default function Kuis() {
           </div>
 
           <Tabs defaultValue="scheduled" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="scheduled" className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Kuis Terjadwal
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="scheduled" className="flex items-center gap-1 text-xs sm:text-sm">
+                <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Kuis</span> Terjadwal
               </TabsTrigger>
-              <TabsTrigger value="ai" className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
+              <TabsTrigger value="ai" className="flex items-center gap-1 text-xs sm:text-sm">
+                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
                 Kuis AI
+              </TabsTrigger>
+              <TabsTrigger value="archive" className="flex items-center gap-1 text-xs sm:text-sm">
+                <History className="w-3 h-3 sm:w-4 sm:h-4" />
+                Arsip
               </TabsTrigger>
             </TabsList>
 
@@ -447,6 +453,10 @@ export default function Kuis() {
                 </div>
               </div>
               <AIQuizTab />
+            </TabsContent>
+
+            <TabsContent value="archive" className="mt-6">
+              <QuizArchive />
             </TabsContent>
           </Tabs>
         </div>
