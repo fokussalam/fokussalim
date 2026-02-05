@@ -17,6 +17,7 @@ import logoSalim from "@/assets/logo-salim.png";
 import { GalleryForm } from "@/components/forms/GalleryForm";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
+import { InfaqPopup } from "@/components/infaq/InfaqPopup";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1007,6 +1008,9 @@ const Index = () => {
           onClose={() => setIsMenuOpen(false)} 
           user={user}
         />
+        
+        {/* Infaq Popup */}
+        <InfaqPopup />
         
         <main>
           <HeroSection />

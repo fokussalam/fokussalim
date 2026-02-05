@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +12,13 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { User, Lock, Bell, Shield } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { InfaqPopupForm } from "@/components/forms/InfaqPopupForm";
 
 export default function Pengaturan() {
   const { profile } = useProfile();
   const { user } = useAuth();
+  const { isAdmin, isPengurus } = useUserRole();
+  const isAdminOrPengurus = isAdmin || isPengurus;
   
   // Password change state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -157,6 +161,9 @@ export default function Pengaturan() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Infaq Popup Settings - Admin/Pengurus only */}
+        {isAdminOrPengurus && <InfaqPopupForm />}
       </div>
     </DashboardLayout>
   );
