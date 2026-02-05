@@ -3,6 +3,39 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import logoSalim from "@/assets/logo-salim.png";
 
+// Simple Hijri date conversion
+const toHijri = (date: Date) => {
+  const hijriMonths = [
+    'Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir',
+    'Jumadil Awal', 'Jumadil Akhir', 'Rajab', 'Syaban',
+    'Ramadhan', 'Syawal', 'Dzulqaidah', 'Dzulhijjah'
+  ];
+  
+  // Julian Day calculation
+  const y = date.getFullYear();
+  const m = date.getMonth() + 1;
+  const d = date.getDate();
+  
+  let jd = Math.floor((1461 * (y + 4800 + Math.floor((m - 14) / 12))) / 4) +
+           Math.floor((367 * (m - 2 - 12 * Math.floor((m - 14) / 12))) / 12) -
+           Math.floor((3 * Math.floor((y + 4900 + Math.floor((m - 14) / 12)) / 100)) / 4) +
+           d - 32075;
+  
+  // Convert Julian Day to Hijri
+  const l = jd - 1948440 + 10632;
+  const n = Math.floor((l - 1) / 10631);
+  const l2 = l - 10631 * n + 354;
+  const j = Math.floor((10985 - l2) / 5316) * Math.floor((50 * l2) / 17719) +
+            Math.floor(l2 / 5670) * Math.floor((43 * l2) / 15238);
+  const l3 = l2 - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50) -
+             Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29;
+  const hijriMonth = Math.floor((24 * l3) / 709);
+  const hijriDay = l3 - Math.floor((709 * hijriMonth) / 24);
+  const hijriYear = 30 * n + j - 30;
+  
+  return `${hijriDay} ${hijriMonths[hijriMonth - 1]} ${hijriYear} H`;
+};
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -26,7 +59,9 @@ const Navbar = () => {
     const minutes = date.getMinutes().toString().padStart(2, '0');
     const seconds = date.getSeconds().toString().padStart(2, '0');
     
-    return `${day}, ${dateNum} ${month} ${year} • ${hours}:${minutes}:${seconds} WIB`;
+    const hijriDate = toHijri(date);
+    
+    return `${day}, ${dateNum} ${month} ${year} / ${hijriDate} • ${hours}:${minutes}:${seconds} WIB`;
   };
 
   const navItems = [
