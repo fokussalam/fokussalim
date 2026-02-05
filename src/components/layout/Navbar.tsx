@@ -1,10 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import logoSalim from "@/assets/logo-salim.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatDate = (date: Date) => {
+    const days = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    
+    const day = days[date.getDay()];
+    const dateNum = date.getDate();
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const seconds = date.getSeconds().toString().padStart(2, '0');
+    
+    return `${day}, ${dateNum} ${month} ${year} • ${hours}:${minutes}:${seconds} WIB`;
+  };
 
   const navItems = [
     { label: "Beranda", href: "#beranda" },
@@ -15,7 +38,18 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+    <>
+      {/* Date Time Bar */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-primary text-primary-foreground">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center h-8 text-xs font-medium">
+            {formatDate(currentTime)}
+          </div>
+        </div>
+      </div>
+      
+      {/* Navigation Bar */}
+      <nav className="fixed top-8 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -83,6 +117,7 @@ const Navbar = () => {
         )}
       </div>
     </nav>
+    </>
   );
 };
 
