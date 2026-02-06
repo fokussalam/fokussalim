@@ -12,10 +12,13 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
 import { MemberForm } from "@/components/forms/MemberForm";
 import { DeleteDialog } from "@/components/forms/DeleteDialog";
-import { Search, Phone, MapPin, Users, Pencil, Trash2, CheckCircle, XCircle, Clock, UserCheck, Loader2 } from "lucide-react";
+import { Search, Phone, MapPin, Users, Pencil, Trash2, CheckCircle, XCircle, Clock, UserCheck, Loader2, UserPlus, Shield, Crown } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
-type Profile = Tables<"profiles">;
+type Profile = Tables<"profiles"> & {
+  registered_by?: string | null;
+  registration_type?: string | null;
+};
 
 export default function Anggota() {
   const [members, setMembers] = useState<Profile[]>([]);
@@ -116,33 +119,58 @@ export default function Anggota() {
     }
   };
 
-  const MemberCard = ({ member, showApprovalActions = false, showReactivate = false }: { member: Profile; showApprovalActions?: boolean; showReactivate?: boolean }) => (
-    <Card key={member.id} className="card-hover">
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          <Avatar className="w-12 h-12 flex-shrink-0">
-            <AvatarImage src={member.avatar_url ?? undefined} />
-            <AvatarFallback className="bg-primary text-primary-foreground font-semibold">{getInitials(member.full_name)}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0 space-y-2">
-            <div className="flex items-start justify-between gap-2">
-              <h3 className="font-semibold truncate">{member.full_name}</h3>
-              <Badge variant="secondary" className={`text-xs flex-shrink-0 ${getStatusColor(member.status ?? "pending")}`}>
-                {getStatusLabel(member.status ?? "pending")}
-              </Badge>
-            </div>
-            {member.phone && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Phone className="w-3.5 h-3.5 flex-shrink-0" />
-                <span className="truncate">{member.phone}</span>
+  const getRegistrationTypeInfo = (type: string | null | undefined) => {
+    switch (type) {
+      case "admin":
+        return { label: "Didaftarkan Admin", icon: Crown, className: "bg-purple-100 text-purple-700" };
+      case "pengurus":
+        return { label: "Didaftarkan Pengurus", icon: Shield, className: "bg-blue-100 text-blue-700" };
+      case "self":
+      default:
+        return { label: "Daftar Mandiri", icon: UserPlus, className: "bg-muted text-muted-foreground" };
+    }
+  };
+
+  const MemberCard = ({ member, showApprovalActions = false, showReactivate = false }: { member: Profile; showApprovalActions?: boolean; showReactivate?: boolean }) => {
+    const regInfo = getRegistrationTypeInfo(member.registration_type);
+    const RegIcon = regInfo.icon;
+
+    return (
+      <Card key={member.id} className="card-hover">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <Avatar className="w-12 h-12 flex-shrink-0">
+              <AvatarImage src={member.avatar_url ?? undefined} />
+              <AvatarFallback className="bg-primary text-primary-foreground font-semibold">{getInitials(member.full_name)}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-semibold truncate">{member.full_name}</h3>
+                <Badge variant="secondary" className={`text-xs flex-shrink-0 ${getStatusColor(member.status ?? "pending")}`}>
+                  {getStatusLabel(member.status ?? "pending")}
+                </Badge>
               </div>
-            )}
-            {member.address && (
-              <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                <span className="line-clamp-2">{member.address}</span>
-              </div>
-            )}
+              
+              {/* Registration Type Badge - shown in pending tab */}
+              {showApprovalActions && (
+                <div className={`inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full ${regInfo.className}`}>
+                  <RegIcon className="w-3 h-3" />
+                  <span>{regInfo.label}</span>
+                </div>
+              )}
+              
+              {member.phone && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Phone className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="truncate">{member.phone}</span>
+                </div>
+              )}
+              {member.address && (
+                <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                  <span className="line-clamp-2">{member.address}</span>
+                </div>
+              )}
 
             {/* Approval Actions for Pending */}
             {showApprovalActions && isAdminOrPengurus && (
@@ -224,7 +252,8 @@ export default function Anggota() {
         </div>
       </CardContent>
     </Card>
-  );
+    );
+  };
 
   const EmptyState = ({ title, description }: { title: string; description: string }) => (
     <Card>

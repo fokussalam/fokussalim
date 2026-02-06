@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -66,6 +68,8 @@ export function MemberForm({ member, onSuccess, trigger }: MemberFormProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { isAdmin, isPengurus } = useUserRole();
+  const { user } = useAuth();
   const isEdit = !!member;
 
   const form = useForm<MemberFormData>({
@@ -117,6 +121,9 @@ export function MemberForm({ member, onSuccess, trigger }: MemberFormProps) {
           description: "Data anggota berhasil diperbarui.",
         });
       } else {
+        // Determine registration type based on who is adding the member
+        const registrationType = isAdmin ? "admin" : isPengurus ? "pengurus" : "self";
+        
         const { error } = await supabase.from("profiles").insert({
           full_name: data.full_name.trim(),
           phone: data.phone?.trim() || null,
@@ -124,7 +131,9 @@ export function MemberForm({ member, onSuccess, trigger }: MemberFormProps) {
           status: data.status,
           user_id: crypto.randomUUID(),
           join_date: new Date().toISOString().split("T")[0],
-        });
+          registered_by: user?.id || null,
+          registration_type: registrationType,
+        } as any);
 
         if (error) throw error;
 
