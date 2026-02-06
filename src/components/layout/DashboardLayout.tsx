@@ -24,7 +24,7 @@ import {
   User,
   ChevronDown,
 } from "lucide-react";
-import logoSalim from "@/assets/logo-salim.png";
+import { AppHeader } from "@/components/layout/AppHeader";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -64,62 +64,59 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Mobile Header */}
-      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-sm border-b border-border px-4 py-3 safe-area-top">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-1.5 h-6 bg-red-accent rounded-full" />
-            <div className="hidden sm:block">
-              <h1 className="text-sm font-semibold text-foreground leading-tight">{currentPage}</h1>
+      {/* App Header with Date */}
+      <AppHeader 
+        showMenuButton={false}
+        title={currentPage}
+      />
+
+      {/* User Menu - positioned in top right */}
+      <div className="fixed top-0 right-0 z-50 h-14 flex items-center pr-4 safe-area-top">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="gap-2 h-9 px-2">
+              <Avatar className="w-7 h-7">
+                <AvatarImage src={profile?.avatar_url ?? undefined} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                  {profile?.full_name ? getInitials(profile.full_name) : "U"}
+                </AvatarFallback>
+              </Avatar>
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 bg-popover">
+            <div className="px-3 py-2 border-b border-border">
+              <p className="text-sm font-medium truncate">{profile?.full_name}</p>
+              <p className="text-xs text-muted-foreground capitalize">
+                {isAdmin ? "Admin" : isPengurus ? "Pengurus" : "Anggota"}
+              </p>
             </div>
-          </div>
+            <DropdownMenuItem asChild>
+              <Link to="/dashboard/profil" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Profil Saya
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/dashboard/pengaturan" className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Pengaturan
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleSignOut}
+              className="text-destructive focus:text-destructive"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Keluar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-2 h-9 px-2">
-                <Avatar className="w-7 h-7">
-                  <AvatarImage src={profile?.avatar_url ?? undefined} />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                    {profile?.full_name ? getInitials(profile.full_name) : "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <ChevronDown className="w-4 h-4 text-muted-foreground" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-popover">
-              <div className="px-3 py-2 border-b border-border">
-                <p className="text-sm font-medium truncate">{profile?.full_name}</p>
-                <p className="text-xs text-muted-foreground capitalize">
-                  {isAdmin ? "Admin" : isPengurus ? "Pengurus" : "Anggota"}
-                </p>
-              </div>
-              <DropdownMenuItem asChild>
-                <Link to="/dashboard/profil" className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  Profil Saya
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/dashboard/pengaturan" className="flex items-center gap-2">
-                  <Settings className="w-4 h-4" />
-                  Pengaturan
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={handleSignOut}
-                className="text-destructive focus:text-destructive"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Keluar
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </header>
-
-      {/* Main Content - with padding for bottom nav */}
-      <main className="flex-1 overflow-auto pb-20">
+      {/* Main Content - with padding for header and bottom nav */}
+      <main className="flex-1 overflow-auto pt-14 pb-20">
         <div className="p-4">{children}</div>
       </main>
 
