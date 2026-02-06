@@ -224,6 +224,8 @@ export type Database = {
           id: string
           join_date: string | null
           phone: string | null
+          registered_by: string | null
+          registration_type: string | null
           status: Database["public"]["Enums"]["member_status"]
           updated_at: string
           user_id: string
@@ -236,6 +238,8 @@ export type Database = {
           id?: string
           join_date?: string | null
           phone?: string | null
+          registered_by?: string | null
+          registration_type?: string | null
           status?: Database["public"]["Enums"]["member_status"]
           updated_at?: string
           user_id: string
@@ -248,6 +252,8 @@ export type Database = {
           id?: string
           join_date?: string | null
           phone?: string | null
+          registered_by?: string | null
+          registration_type?: string | null
           status?: Database["public"]["Enums"]["member_status"]
           updated_at?: string
           user_id?: string
