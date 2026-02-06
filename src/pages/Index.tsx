@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet-async";
 import { 
-  Menu, X, BookOpen, MessageCircle, BookMarked, Heart,
+  BookOpen, MessageCircle, BookMarked, Heart,
   Calendar, MapPin, User, ChevronRight, ExternalLink,
   Phone, Instagram, Youtube, ArrowRight, Pencil, Plus, Trash2,
   Home, LogIn, LogOut, LayoutDashboard,
@@ -18,7 +18,7 @@ import { GalleryForm } from "@/components/forms/GalleryForm";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { InfaqPopup } from "@/components/infaq/InfaqPopup";
-import { useState as useStateHijri, useEffect as useEffectHijri } from "react";
+import { AppHeader } from "@/components/layout/AppHeader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,96 +31,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-// Simple Hijri date conversion
-const toHijri = (date: Date) => {
-  const hijriMonths = [
-    'Muharram', 'Safar', 'Rabiul Awal', 'Rabiul Akhir',
-    'Jumadil Awal', 'Jumadil Akhir', 'Rajab', 'Syaban',
-    'Ramadhan', 'Syawal', 'Dzulqaidah', 'Dzulhijjah'
-  ];
-  
-  const y = date.getFullYear();
-  const m = date.getMonth() + 1;
-  const d = date.getDate();
-  
-  let jd = Math.floor((1461 * (y + 4800 + Math.floor((m - 14) / 12))) / 4) +
-           Math.floor((367 * (m - 2 - 12 * Math.floor((m - 14) / 12))) / 12) -
-           Math.floor((3 * Math.floor((y + 4900 + Math.floor((m - 14) / 12)) / 100)) / 4) +
-           d - 32075;
-  
-  const l = jd - 1948440 + 10632;
-  const n = Math.floor((l - 1) / 10631);
-  const l2 = l - 10631 * n + 354;
-  const j = Math.floor((10985 - l2) / 5316) * Math.floor((50 * l2) / 17719) +
-            Math.floor(l2 / 5670) * Math.floor((43 * l2) / 15238);
-  const l3 = l2 - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50) -
-             Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29;
-  const hijriMonth = Math.floor((24 * l3) / 709);
-  const hijriDay = l3 - Math.floor((709 * hijriMonth) / 24);
-  const hijriYear = 30 * n + j - 30;
-  
-  return `${hijriDay} ${hijriMonths[hijriMonth - 1]} ${hijriYear} H`;
-};
-
-// Date Time Bar Component
-const DateTimeBar = () => {
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatDate = (date: Date) => {
-    const days = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    
-    const day = days[date.getDay()];
-    const dateNum = date.getDate();
-    const month = months[date.getMonth()];
-    const year = date.getFullYear();
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    const hijriDate = toHijri(date);
-    
-    return `${day}, ${dateNum} ${month} ${year} / ${hijriDate} • ${hours}:${minutes}:${seconds} WIB`;
-  };
-
-  return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-primary text-primary-foreground safe-area-top">
-      <div className="flex items-center justify-center h-8 text-xs font-medium px-2 text-center">
-        {formatDate(currentTime)}
-      </div>
-    </div>
-  );
-};
-
-// Mobile Top Bar Component
-const TopBar = ({ onMenuClick, isMenuOpen }: { onMenuClick: () => void; isMenuOpen: boolean }) => (
-  <header className="fixed top-8 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
-    <div className="flex items-center justify-between px-4 h-14">
-      <div className="flex items-center gap-2">
-        <div className="w-2 h-6 bg-red-accent rounded-full" />
-        <h1 className="text-lg font-bold text-foreground">Fokus <span className="text-red-accent">Salim</span></h1>
-      </div>
-      <button
-        onClick={onMenuClick}
-        className="p-2 -mr-2 rounded-lg hover:bg-muted transition-colors"
-        aria-label="Menu"
-      >
-        {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </button>
-    </div>
-  </header>
-);
-
 // Running Text Marquee Component (below TopBar)
 const RunningTextBanner = () => (
-  <div className="fixed top-[86px] left-0 right-0 z-40 bg-accent overflow-hidden">
+  <div className="fixed top-14 left-0 right-0 z-40 bg-accent overflow-hidden">
     <div className="flex animate-marquee whitespace-nowrap py-1.5">
       {[...Array(4)].map((_, i) => (
         <span key={i} className="mx-8 text-sm font-medium text-accent-foreground flex items-center gap-2">
@@ -147,7 +60,7 @@ const MobileMenu = ({ isOpen, onClose, user }: { isOpen: boolean; onClose: () =>
   ];
 
   return (
-    <div className="fixed inset-0 z-40 pt-[86px] bg-background animate-fade-in">
+    <div className="fixed inset-0 z-40 pt-[78px] bg-background animate-fade-in">
       <nav className="flex flex-col p-4 gap-1">
         {menuItems.map((item) => (
           <a
@@ -183,7 +96,7 @@ const MobileMenu = ({ isOpen, onClose, user }: { isOpen: boolean; onClose: () =>
 
 // Hero Section
 const HeroSection = () => (
-  <section id="beranda" className="pt-32 pb-10 px-4 bg-gradient-to-b from-red-accent/5 to-background">
+  <section id="beranda" className="pt-24 pb-10 px-4 bg-gradient-to-b from-red-accent/5 to-background">
     <div className="max-w-sm mx-auto text-center">
       <div className="w-24 h-24 mx-auto mb-4">
         <img src={logoSalim} alt="Logo Salim" className="w-full h-full object-contain" />
@@ -1067,12 +980,11 @@ const Index = () => {
       </Helmet>
 
       <div className="min-h-screen bg-background">
-        <DateTimeBar />
-        <RunningTextBanner />
-        <TopBar 
+        <AppHeader 
           onMenuClick={() => setIsMenuOpen(!isMenuOpen)} 
           isMenuOpen={isMenuOpen} 
         />
+        <RunningTextBanner />
         <MobileMenu 
           isOpen={isMenuOpen} 
           onClose={() => setIsMenuOpen(false)} 
