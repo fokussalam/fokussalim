@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { InfaqPopup } from "@/components/infaq/InfaqPopup";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { WhatsAppJoinSection } from "@/components/sections/WhatsAppJoinSection";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -996,6 +997,7 @@ const Index = () => {
         
         <main>
           <HeroSection />
+          <WhatsAppJoinSection isAdmin={isAdminOrPengurus} />
           <ProgramSection isAdmin={isAdminOrPengurus} content={homepageContent} onRefresh={fetchContent} />
           <ScheduleSection />
           <ContentSection isAdmin={isAdminOrPengurus} content={homepageContent} onRefresh={fetchContent} />
