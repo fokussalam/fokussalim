@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { InfaqPopup } from "@/components/infaq/InfaqPopup";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { WhatsAppJoinSection } from "@/components/sections/WhatsAppJoinSection";
+import { RadioStreamingSection } from "@/components/sections/RadioStreamingSection";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -997,6 +998,7 @@ const Index = () => {
         
         <main>
           <HeroSection />
+          <RadioStreamingSection />
           <WhatsAppJoinSection isAdmin={isAdminOrPengurus} />
           <ProgramSection isAdmin={isAdminOrPengurus} content={homepageContent} onRefresh={fetchContent} />
           <ScheduleSection />
