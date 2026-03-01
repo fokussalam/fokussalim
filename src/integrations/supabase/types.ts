@@ -215,6 +215,45 @@ export type Database = {
           },
         ]
       }
+      pab_items: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          icon: string
+          id: string
+          is_active: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon?: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon?: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
