@@ -433,7 +433,7 @@ export default function Kuis() {
               </TabsTrigger>
               <TabsTrigger value="ai" className="flex items-center gap-1 text-xs sm:text-sm">
                 <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-                Kuis AI
+                Kuis Salim
               </TabsTrigger>
               <TabsTrigger value="archive" className="flex items-center gap-1 text-xs sm:text-sm">
                 <History className="w-3 h-3 sm:w-4 sm:h-4" />
