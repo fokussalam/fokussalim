@@ -21,6 +21,7 @@ import { InfaqPopup } from "@/components/infaq/InfaqPopup";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { WhatsAppJoinSection } from "@/components/sections/WhatsAppJoinSection";
 import { RadioStreamingSection } from "@/components/sections/RadioStreamingSection";
+import { HomeQuizSection } from "@/components/sections/HomeQuizSection";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -999,6 +1000,7 @@ const Index = () => {
         <main>
           <HeroSection />
           <RadioStreamingSection />
+          <HomeQuizSection />
           <WhatsAppJoinSection isAdmin={isAdminOrPengurus} />
           <ProgramSection isAdmin={isAdminOrPengurus} content={homepageContent} onRefresh={fetchContent} />
           <ScheduleSection />
