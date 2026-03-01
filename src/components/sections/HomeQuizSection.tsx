@@ -142,10 +142,10 @@ export const HomeQuizSection = () => {
           <div className="text-center mb-4">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1.5 rounded-full mb-2">
               <Sparkles className="w-4 h-4" />
-              <span className="text-xs font-medium">Kuis AI</span>
+              <span className="text-xs font-medium">Kuis Salim</span>
             </div>
             <h3 className="text-lg font-semibold">Uji Pengetahuan Islam</h3>
-            <p className="text-xs text-muted-foreground mt-1">Kuis interaktif berbasis AI</p>
+            <p className="text-xs text-muted-foreground mt-1">Berdasarkan referensi kitab Ulama Salaf</p>
           </div>
 
           <Card>

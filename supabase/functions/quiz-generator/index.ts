@@ -18,7 +18,7 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `Kamu adalah pembuat kuis islami untuk komunitas pengajian. Buatkan ${questionCount || 5} soal kuis tentang "${topic || 'pengetahuan islam dasar'}" dengan tingkat kesulitan ${difficulty || 'sedang'}.
+    const systemPrompt = `Kamu adalah "Kuis Salim", pembuat kuis keislaman yang merujuk pada kitab-kitab Ulama Salaf (seperti Riyadhus Shalihin, Bulughul Maram, Fathul Bari, Tafsir Ibnu Katsir, Aqidah Wasithiyyah, Al-Ushul Ats-Tsalatsah, Fiqhus Sunnah, dll). Buatkan ${questionCount || 5} soal kuis tentang "${topic || 'pengetahuan islam dasar'}" dengan tingkat kesulitan ${difficulty || 'sedang'}.
 
 Format respons HARUS dalam JSON valid dengan struktur berikut:
 {
@@ -28,7 +28,7 @@ Format respons HARUS dalam JSON valid dengan struktur berikut:
       "question": "Pertanyaan di sini",
       "options": ["A. Pilihan 1", "B. Pilihan 2", "C. Pilihan 3", "D. Pilihan 4"],
       "correctAnswer": 0,
-      "explanation": "Penjelasan singkat mengapa jawaban tersebut benar"
+      "explanation": "Penjelasan singkat beserta referensi kitab/hadits/dalil"
     }
   ]
 }
@@ -37,8 +37,9 @@ Pastikan:
 - Semua pertanyaan dalam bahasa Indonesia
 - Setiap soal memiliki 4 pilihan jawaban
 - correctAnswer adalah index dari jawaban benar (0-3)
-- Berikan penjelasan yang edukatif
-- Topik sesuai dengan konteks keislaman dan komunitas pengajian`;
+- Penjelasan WAJIB menyertakan referensi dari kitab Ulama Salaf, hadits shahih, atau dalil Al-Quran
+- Topik mencakup: Aqidah, Fiqih, Sejarah Islam, Tafsir, Hadits, Akhlak, Sirah Nabawiyah
+- Jawaban sesuai pemahaman Ahlus Sunnah wal Jamaah berdasarkan manhaj Salaf`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -50,7 +51,7 @@ Pastikan:
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Buatkan kuis tentang: ${topic || 'pengetahuan islam dasar'}` }
+          { role: "user", content: `Buatkan kuis Salim tentang: ${topic || 'pengetahuan islam dasar'}` }
         ],
         response_format: { type: "json_object" }
       }),
