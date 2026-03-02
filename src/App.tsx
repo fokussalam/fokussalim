@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Mushaf from "./pages/Mushaf";
 import Dashboard from "./pages/Dashboard";
 import Anggota from "./pages/dashboard/Anggota";
 import Kegiatan from "./pages/dashboard/Kegiatan";
@@ -30,6 +31,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/mushaf" element={<Mushaf />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route

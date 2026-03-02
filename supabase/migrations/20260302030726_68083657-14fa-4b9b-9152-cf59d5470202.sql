@@ -1,0 +1,1 @@
+UPDATE pab_items SET url = '/mushaf' WHERE id = 'a0f03510-e436-4a5c-9f9b-c24d001623bf';

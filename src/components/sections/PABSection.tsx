@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -120,6 +121,7 @@ const PABForm = ({ item, onSuccess, trigger }: PABFormProps) => {
 };
 
 export const PABSection = ({ isAdmin }: { isAdmin: boolean }) => {
+  const navigate = useNavigate();
   const [items, setItems] = useState<PABItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -174,7 +176,13 @@ export const PABSection = ({ isAdmin }: { isAdmin: boolean }) => {
                 <Card
                   key={item.id}
                   className="p-4 text-center card-hover relative group cursor-pointer"
-                  onClick={() => item.url && window.open(item.url, "_blank")}
+                  onClick={() => {
+                    if (item.url?.startsWith("/")) {
+                      navigate(item.url);
+                    } else if (item.url) {
+                      window.open(item.url, "_blank");
+                    }
+                  }}
                 >
                   {isAdmin && (
                     <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -213,7 +221,7 @@ export const PABSection = ({ isAdmin }: { isAdmin: boolean }) => {
                   {item.description && (
                     <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
                   )}
-                  {item.url && (
+                  {item.url && !item.url.startsWith("/") && (
                     <ExternalLink className="w-3 h-3 text-muted-foreground mx-auto mt-1.5" />
                   )}
                 </Card>

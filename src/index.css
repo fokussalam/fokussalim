@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amiri+Quran&display=swap');
+
+.font-arabic {
+  font-family: 'Amiri Quran', 'Traditional Arabic', 'Scheherazade New', serif;
+}
 
 @layer base {
   :root {
