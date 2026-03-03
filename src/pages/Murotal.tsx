@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Helmet } from "react-helmet-async";
 import {
   ArrowLeft, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX,
-  Repeat, Search, Headphones, Loader2
+  Repeat, Search, Headphones, Loader2, Share2, AlertCircle
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Surah {
   number: number;
@@ -21,24 +22,18 @@ interface Surah {
   revelationType: string;
 }
 
-interface Reciter {
-  identifier: string;
-  name: string;
-  englishName: string;
-  language: string;
-}
-
+// Verified reciters with full surah audio on CDN
 const POPULAR_RECITERS = [
   { identifier: "ar.alafasy", name: "Mishary Rashid Alafasy" },
   { identifier: "ar.abdurrahmaansudais", name: "Abdurrahman As-Sudais" },
-  { identifier: "ar.saaborelmosly", name: "Saud Ash-Shuraim" },
   { identifier: "ar.husary", name: "Mahmoud Khalil Al-Husary" },
-  { identifier: "ar.minshawi", name: "Mohamed Siddiq El-Minshawi" },
   { identifier: "ar.abdulbasitmurattal", name: "Abdul Basit (Murattal)" },
-  { identifier: "ar.maaboralmoshaf", name: "Maher Al-Muaiqly" },
+  { identifier: "ar.minshawi", name: "Mohamed Siddiq El-Minshawi" },
   { identifier: "ar.ahmedajamy", name: "Ahmed ibn Ali al-Ajamy" },
-  { identifier: "ar.haborelshateee", name: "Abu Bakr Ash-Shatri" },
+  { identifier: "ar.abdulbariaththubaity", name: "Abdul Bari ath-Thubaity" },
+  { identifier: "ar.abdulazizazzahrani", name: "Abdul Aziz az-Zahrani" },
   { identifier: "ar.ibrahimakhbar", name: "Ibrahim Al-Akhdar" },
+  { identifier: "ar.muhammadayyoub", name: "Muhammad Ayyub" },
 ];
 
 const formatTime = (seconds: number) => {
@@ -48,12 +43,21 @@ const formatTime = (seconds: number) => {
   return `${m}:${s.toString().padStart(2, "0")}`;
 };
 
+const getAudioUrl = (reciter: string, surahNumber: number) =>
+  `https://cdn.islamic.network/quran/audio-surah/128/${reciter}/${surahNumber}.mp3`;
+
 const Murotal = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [surahs, setSurahs] = useState<Surah[]>([]);
-  const [selectedSurah, setSelectedSurah] = useState(1);
-  const [reciter, setReciter] = useState("ar.alafasy");
+  const initialSurah = parseInt(searchParams.get("surah") || "1") || 1;
+  const initialReciter = searchParams.get("qari") || "ar.alafasy";
+  const [selectedSurah, setSelectedSurah] = useState(Math.min(Math.max(initialSurah, 1), 114));
+  const [reciter, setReciter] = useState(
+    POPULAR_RECITERS.some(r => r.identifier === initialReciter) ? initialReciter : "ar.alafasy"
+  );
   const [loading, setLoading] = useState(true);
   const [audioLoading, setAudioLoading] = useState(false);
+  const [audioError, setAudioError] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -62,6 +66,12 @@ const Murotal = () => {
   const [repeat, setRepeat] = useState(false);
   const [search, setSearch] = useState("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const selectedSurahRef = useRef(selectedSurah);
+  const repeatRef = useRef(repeat);
+
+  // Keep refs in sync
+  selectedSurahRef.current = selectedSurah;
+  repeatRef.current = repeat;
 
   useEffect(() => {
     fetch("https://api.alquran.cloud/v1/surah")
@@ -70,40 +80,82 @@ const Murotal = () => {
       .catch(() => setLoading(false));
   }, []);
 
-  const audioUrl = `https://cdn.islamic.network/quran/audio-surah/128/${reciter}/${selectedSurah}.mp3`;
-
-  const loadAudio = useCallback(() => {
+  // Load and prepare audio when surah or reciter changes
+  useEffect(() => {
     if (audioRef.current) {
       audioRef.current.pause();
+      audioRef.current.removeAttribute("src");
+      audioRef.current.load();
     }
+
     setAudioLoading(true);
+    setAudioError(false);
     setPlaying(false);
     setCurrentTime(0);
     setDuration(0);
-    const audio = new Audio(audioUrl);
+
+    const audio = new Audio();
+    audio.preload = "auto";
+
+    audio.addEventListener("canplay", () => {
+      setAudioLoading(false);
+      setAudioError(false);
+    });
+
+    audio.addEventListener("loadedmetadata", () => {
+      setDuration(audio.duration);
+    });
+
+    audio.addEventListener("timeupdate", () => {
+      setCurrentTime(audio.currentTime);
+    });
+
+    audio.addEventListener("ended", () => {
+      if (repeatRef.current) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      } else if (selectedSurahRef.current < 114) {
+        setSelectedSurah(prev => prev + 1);
+      } else {
+        setPlaying(false);
+      }
+    });
+
+    audio.addEventListener("error", () => {
+      setAudioLoading(false);
+      setAudioError(true);
+      setPlaying(false);
+    });
+
+    audio.src = getAudioUrl(reciter, selectedSurah);
     audio.volume = muted ? 0 : volume / 100;
-    audio.onloadedmetadata = () => { setDuration(audio.duration); setAudioLoading(false); };
-    audio.ontimeupdate = () => setCurrentTime(audio.currentTime);
-    audio.onended = () => {
-      if (repeat) { audio.currentTime = 0; audio.play(); }
-      else if (selectedSurah < 114) { setSelectedSurah(s => s + 1); }
-      else { setPlaying(false); }
-    };
-    audio.onerror = () => { setAudioLoading(false); };
     audioRef.current = audio;
-  }, [audioUrl, volume, muted, repeat, selectedSurah]);
 
-  useEffect(() => { loadAudio(); return () => { audioRef.current?.pause(); }; }, [reciter, selectedSurah]);
+    return () => {
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+    };
+  }, [reciter, selectedSurah]);
 
+  // Update volume
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = muted ? 0 : volume / 100;
   }, [volume, muted]);
 
-  const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (playing) { audioRef.current.pause(); }
-    else { audioRef.current.play().catch(() => {}); }
-    setPlaying(!playing);
+  const togglePlay = async () => {
+    if (!audioRef.current || audioError) return;
+    if (playing) {
+      audioRef.current.pause();
+      setPlaying(false);
+    } else {
+      try {
+        await audioRef.current.play();
+        setPlaying(true);
+      } catch {
+        toast.error("Gagal memutar audio. Coba sentuh layar terlebih dahulu.");
+      }
+    }
   };
 
   const seekTo = (val: number[]) => {
@@ -112,6 +164,22 @@ const Murotal = () => {
 
   const prevSurah = () => { if (selectedSurah > 1) setSelectedSurah(s => s - 1); };
   const nextSurah = () => { if (selectedSurah < 114) setSelectedSurah(s => s + 1); };
+
+  const handleShare = async () => {
+    const currentReciterName = POPULAR_RECITERS.find(r => r.identifier === reciter)?.name || reciter;
+    const surahName = currentSurah?.englishName || `Surah ${selectedSurah}`;
+    const shareUrl = `${window.location.origin}/murotal?surah=${selectedSurah}&qari=${reciter}`;
+    const shareText = `🎧 Dengarkan ${surahName} - Qari: ${currentReciterName}\n\n`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `Murotal ${surahName}`, text: shareText, url: shareUrl });
+      } catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(shareText + shareUrl);
+      toast.success("Link berhasil disalin!");
+    }
+  };
 
   const currentSurah = surahs.find(s => s.number === selectedSurah);
   const filteredSurahs = surahs.filter(s =>
@@ -134,10 +202,13 @@ const Murotal = () => {
           <Button variant="ghost" size="icon" className="shrink-0" asChild>
             <Link to="/"><ArrowLeft className="w-5 h-5" /></Link>
           </Button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1">
             <Headphones className="w-5 h-5 text-primary" />
             <h1 className="text-lg font-bold">Murotal Online</h1>
           </div>
+          <Button variant="ghost" size="icon" className="shrink-0" onClick={handleShare}>
+            <Share2 className="w-5 h-5" />
+          </Button>
         </div>
       </header>
 
@@ -165,6 +236,14 @@ const Murotal = () => {
             <p className="text-sm text-foreground font-medium">{currentSurah.englishName}</p>
             <p className="text-xs text-muted-foreground">{currentSurah.englishNameTranslation} • {currentSurah.numberOfAyahs} Ayat</p>
 
+            {/* Error State */}
+            {audioError && (
+              <div className="mt-3 flex items-center justify-center gap-2 text-destructive text-xs">
+                <AlertCircle className="w-4 h-4" />
+                <span>Audio tidak tersedia untuk qari ini. Coba qari lain.</span>
+              </div>
+            )}
+
             {/* Progress */}
             <div className="mt-5 space-y-2">
               <Slider
@@ -189,7 +268,7 @@ const Murotal = () => {
                 size="icon"
                 className="w-14 h-14 rounded-full"
                 onClick={togglePlay}
-                disabled={audioLoading}
+                disabled={audioLoading || audioError}
               >
                 {audioLoading ? (
                   <Loader2 className="w-6 h-6 animate-spin" />
@@ -204,7 +283,7 @@ const Murotal = () => {
               </Button>
             </div>
 
-            {/* Volume & Repeat */}
+            {/* Volume, Repeat & Share */}
             <div className="flex items-center justify-center gap-4 mt-3">
               <Button
                 variant="ghost" size="icon" className="h-8 w-8"
@@ -224,6 +303,12 @@ const Murotal = () => {
                 onClick={() => setRepeat(!repeat)}
               >
                 <Repeat className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost" size="icon" className="h-8 w-8"
+                onClick={handleShare}
+              >
+                <Share2 className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -259,7 +344,7 @@ const Murotal = () => {
                       : "hover:bg-muted/50"
                   }`}
                 >
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                     surah.number === selectedSurah
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground"
@@ -276,7 +361,7 @@ const Murotal = () => {
                     </span>
                   </div>
                   {surah.number === selectedSurah && playing && (
-                    <div className="flex gap-0.5 items-end h-4">
+                    <div className="flex gap-0.5 items-end h-4 shrink-0">
                       {[1, 2, 3].map(i => (
                         <div key={i} className="w-1 bg-primary rounded-full animate-pulse" style={{ height: `${8 + i * 4}px`, animationDelay: `${i * 0.15}s` }} />
                       ))}
