@@ -138,7 +138,7 @@ export const HomeQuizSection = () => {
   if (questions.length === 0) {
     return (
       <section className="py-8 px-4">
-        <div className="max-w-sm mx-auto">
+        <div className="max-w-2xl mx-auto">
           <div className="text-center mb-4">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1.5 rounded-full mb-2">
               <Sparkles className="w-4 h-4" />
@@ -227,7 +227,7 @@ export const HomeQuizSection = () => {
     const pct = (result.correct / result.total) * 100;
     return (
       <section className="py-8 px-4">
-        <div className="max-w-sm mx-auto">
+        <div className="max-w-2xl mx-auto">
           <Card>
             <CardHeader className="text-center pb-2">
               <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
@@ -293,7 +293,7 @@ export const HomeQuizSection = () => {
   // Active quiz
   return (
     <section className="py-8 px-4">
-      <div className="max-w-sm mx-auto">
+      <div className="max-w-2xl mx-auto">
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between mb-2">

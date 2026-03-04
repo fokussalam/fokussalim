@@ -106,7 +106,7 @@ export function RadioStreamingSection() {
 
   return (
     <section className="py-6 px-4">
-      <div className="max-w-sm mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="bg-gradient-to-r from-destructive/10 to-accent/5 rounded-xl p-4 border border-destructive/20 relative overflow-hidden">
           {/* Animated background when playing */}
           {isPlaying && (

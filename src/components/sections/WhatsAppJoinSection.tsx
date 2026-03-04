@@ -44,7 +44,7 @@ export function WhatsAppJoinSection({ isAdmin }: WhatsAppJoinSectionProps) {
   if (loading) {
     return (
       <section className="py-6 px-4">
-        <div className="max-w-sm mx-auto">
+        <div className="max-w-4xl mx-auto">
           <div className="bg-gradient-to-r from-green-500/10 to-green-600/5 rounded-xl p-4 border border-green-500/20 animate-pulse">
             <div className="h-5 w-32 bg-muted rounded mb-2" />
             <div className="h-4 w-48 bg-muted rounded" />
@@ -60,7 +60,7 @@ export function WhatsAppJoinSection({ isAdmin }: WhatsAppJoinSectionProps) {
 
   return (
     <section className="py-6 px-4">
-      <div className="max-w-sm mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="bg-gradient-to-r from-green-500/10 to-green-600/5 rounded-xl p-4 border border-green-500/20 relative">
           {isAdmin && (
             <div className="absolute top-2 right-2">
