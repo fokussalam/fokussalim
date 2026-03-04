@@ -13,6 +13,8 @@ import {
   Home,
   BookOpen,
   Loader2,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 interface Ayah {
@@ -156,36 +158,33 @@ const JUZ_PAGES = [
   402, 422, 442, 462, 482, 502, 522, 542, 562, 582,
 ];
 
+// Mushaf Madinah page image URL
+const getMushafImageUrl = (pageNum: number) =>
+  `https://madinah.alquran.cloud/page/${pageNum}/1`;
+
 export default function Mushaf() {
   const [page, setPage] = useState(1);
-  const [ayahs, setAyahs] = useState<Ayah[]>([]);
   const [translations, setTranslations] = useState<TranslationAyah[]>([]);
   const [loading, setLoading] = useState(true);
+  const [imgLoading, setImgLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pageInput, setPageInput] = useState("1");
+  const [showTranslation, setShowTranslation] = useState(true);
 
   const currentJuz = [...JUZ_PAGES].reverse().findIndex((p) => p <= page);
   const juzNumber = currentJuz >= 0 ? JUZ_PAGES.length - currentJuz : 1;
   const currentSurah = SURAH_LIST.filter((s) => s.startPage <= page).pop();
 
-  const fetchPage = useCallback(async (pageNum: number) => {
+  const fetchTranslation = useCallback(async (pageNum: number) => {
     setLoading(true);
     setError(null);
     try {
-      const [arabicRes, transRes] = await Promise.all([
-        fetch(`https://api.alquran.cloud/v1/page/${pageNum}/quran-uthmani`),
-        fetch(`https://api.alquran.cloud/v1/page/${pageNum}/id.indonesian`),
-      ]);
-
-      if (!arabicRes.ok || !transRes.ok) throw new Error("Gagal memuat data");
-
-      const arabicData = await arabicRes.json();
-      const transData = await transRes.json();
-
-      setAyahs(arabicData.data.ayahs || []);
-      setTranslations(transData.data.ayahs || []);
+      const res = await fetch(`https://api.alquran.cloud/v1/page/${pageNum}/id.indonesian`);
+      if (!res.ok) throw new Error("Gagal memuat terjemahan");
+      const data = await res.json();
+      setTranslations(data.data.ayahs || []);
     } catch (err) {
-      setError("Gagal memuat halaman. Periksa koneksi internet Anda.");
+      setError("Gagal memuat terjemahan. Periksa koneksi internet Anda.");
       console.error(err);
     } finally {
       setLoading(false);
@@ -193,10 +192,11 @@ export default function Mushaf() {
   }, []);
 
   useEffect(() => {
-    fetchPage(page);
+    setImgLoading(true);
+    fetchTranslation(page);
     setPageInput(page.toString());
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [page, fetchPage]);
+  }, [page, fetchTranslation]);
 
   const goToPage = (p: number) => {
     if (p >= 1 && p <= TOTAL_PAGES) setPage(p);
@@ -207,18 +207,17 @@ export default function Mushaf() {
     if (!isNaN(num) && num >= 1 && num <= TOTAL_PAGES) setPage(num);
   };
 
-  // Group ayahs by surah for display
-  const groupedAyahs = ayahs.reduce<{ surahName: string; surahNumber: number; ayahs: { arabic: Ayah; translation: TranslationAyah }[] }[]>(
-    (groups, ayah, idx) => {
-      const translation = translations[idx];
+  // Group translations by surah
+  const groupedTranslations = translations.reduce<{ surahName: string; surahNumber: number; ayahs: TranslationAyah[] }[]>(
+    (groups, ayah) => {
       const lastGroup = groups[groups.length - 1];
       if (lastGroup && lastGroup.surahNumber === ayah.surah.number) {
-        lastGroup.ayahs.push({ arabic: ayah, translation });
+        lastGroup.ayahs.push(ayah);
       } else {
         groups.push({
           surahName: ayah.surah.name,
           surahNumber: ayah.surah.number,
-          ayahs: [{ arabic: ayah, translation }],
+          ayahs: [ayah],
         });
       }
       return groups;
@@ -229,14 +228,14 @@ export default function Mushaf() {
   return (
     <>
       <Helmet>
-        <title>Mushaf Al-Quran - Fokus Salim</title>
-        <meta name="description" content="Baca Mushaf Al-Quran Madinah dengan terjemahan Bahasa Indonesia" />
+        <title>Mushaf Al-Quran Madinah - Fokus Salim</title>
+        <meta name="description" content="Baca Mushaf Al-Quran cetakan Madinah dengan terjemahan Bahasa Indonesia" />
       </Helmet>
 
       <div className="min-h-screen bg-background">
         {/* Header */}
         <header className="sticky top-0 z-50 bg-card border-b border-border shadow-sm">
-          <div className="max-w-2xl mx-auto px-4 py-3">
+          <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between mb-3">
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/">
@@ -246,29 +245,25 @@ export default function Mushaf() {
               </Button>
               <div className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-primary" />
-                <h1 className="text-base font-bold text-foreground">Mushaf Al-Quran</h1>
+                <h1 className="text-base font-bold text-foreground">Mushaf Madinah</h1>
               </div>
-              <div className="w-20" />
+              <Button
+                variant={showTranslation ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowTranslation(!showTranslation)}
+                className="gap-1.5 text-xs"
+              >
+                {showTranslation ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                <span className="hidden sm:inline">Terjemah</span>
+              </Button>
             </div>
 
             {/* Navigation */}
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 shrink-0"
-                onClick={() => goToPage(1)}
-                disabled={page === 1}
-              >
+              <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => goToPage(1)} disabled={page === 1}>
                 <ChevronsLeft className="w-4 h-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 shrink-0"
-                onClick={() => goToPage(page - 1)}
-                disabled={page === 1}
-              >
+              <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => goToPage(page - 1)} disabled={page === 1}>
                 <ChevronLeft className="w-4 h-4" />
               </Button>
 
@@ -286,22 +281,10 @@ export default function Mushaf() {
                 <span className="text-xs text-muted-foreground whitespace-nowrap">/ {TOTAL_PAGES}</span>
               </div>
 
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 shrink-0"
-                onClick={() => goToPage(page + 1)}
-                disabled={page === TOTAL_PAGES}
-              >
+              <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => goToPage(page + 1)} disabled={page === TOTAL_PAGES}>
                 <ChevronRight className="w-4 h-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 shrink-0"
-                onClick={() => goToPage(TOTAL_PAGES)}
-                disabled={page === TOTAL_PAGES}
-              >
+              <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => goToPage(TOTAL_PAGES)} disabled={page === TOTAL_PAGES}>
                 <ChevronsRight className="w-4 h-4" />
               </Button>
             </div>
@@ -347,100 +330,98 @@ export default function Mushaf() {
         </header>
 
         {/* Content */}
-        <main className="max-w-2xl mx-auto px-4 py-6">
+        <main className="max-w-4xl mx-auto px-4 py-6">
           {/* Page info badge */}
-          <div className="flex items-center justify-center gap-3 mb-6 text-xs text-muted-foreground">
+          <div className="flex items-center justify-center gap-3 mb-4 text-xs text-muted-foreground">
             <span>Halaman {page}</span>
             <span>•</span>
             <span>Juz {juzNumber}</span>
+            {currentSurah && (
+              <>
+                <span>•</span>
+                <span>{currentSurah.latin}</span>
+              </>
+            )}
           </div>
 
-          {loading ? (
-            <div className="space-y-4">
-              <div className="flex justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} className="h-20 w-full rounded-lg" />
-              ))}
+          {/* Mushaf Madinah Image */}
+          <div className="flex justify-center mb-6">
+            <div className="relative w-full max-w-lg bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+              {imgLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-10">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              )}
+              <img
+                src={getMushafImageUrl(page)}
+                alt={`Mushaf Madinah halaman ${page}`}
+                className="w-full h-auto"
+                onLoad={() => setImgLoading(false)}
+                onError={() => {
+                  setImgLoading(false);
+                  setError("Gagal memuat gambar mushaf.");
+                }}
+              />
             </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-destructive mb-4">{error}</p>
-              <Button onClick={() => fetchPage(page)}>Coba Lagi</Button>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {groupedAyahs.map((group) => (
-                <div key={`${group.surahNumber}-${group.ayahs[0].arabic.numberInSurah}`}>
-                  {/* Surah header when new surah starts on this page */}
-                  {group.ayahs[0].arabic.numberInSurah === 1 && (
-                    <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4 text-center">
-                      <h2 className="text-xl font-bold text-foreground font-arabic">
-                        {group.surahName}
-                      </h2>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {SURAH_LIST.find((s) => s.number === group.surahNumber)?.latin} — Surah ke-{group.surahNumber}
-                      </p>
-                      {/* Bismillah (not for At-Tawbah) */}
-                      {group.surahNumber !== 9 && group.surahNumber !== 1 && (
-                        <p className="text-lg mt-3 font-arabic text-foreground leading-loose">
-                          بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
-                        </p>
+          </div>
+
+          {/* Translation Section (collapsible) */}
+          {showTranslation && (
+            <div className="bg-card rounded-xl border border-border p-4 md:p-6 mb-6">
+              <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-primary" />
+                Terjemah Bahasa Indonesia
+              </h3>
+
+              {loading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-12 w-full rounded-lg" />
+                  ))}
+                </div>
+              ) : error ? (
+                <div className="text-center py-6">
+                  <p className="text-destructive text-sm mb-3">{error}</p>
+                  <Button size="sm" onClick={() => fetchTranslation(page)}>Coba Lagi</Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {groupedTranslations.map((group) => (
+                    <div key={`${group.surahNumber}-${group.ayahs[0].numberInSurah}`}>
+                      {group.ayahs[0].numberInSurah === 1 && (
+                        <div className="bg-primary/5 border border-primary/10 rounded-lg px-3 py-2 mb-3 text-center">
+                          <p className="text-xs font-semibold text-primary">
+                            {SURAH_LIST.find((s) => s.number === group.surahNumber)?.latin} — Surah ke-{group.surahNumber}
+                          </p>
+                        </div>
                       )}
-                    </div>
-                  )}
-
-                  {/* Ayahs */}
-                  {group.ayahs.map(({ arabic, translation }) => (
-                    <div
-                      key={arabic.number}
-                      className="border-b border-border/50 pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0"
-                    >
-                      {/* Ayah number badge */}
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">
-                          {arabic.numberInSurah}
-                        </span>
-                      </div>
-
-                      {/* Arabic text */}
-                      <p
-                        className="text-right text-xl leading-[2.5] font-arabic text-foreground mb-3"
-                        dir="rtl"
-                      >
-                        {arabic.text}
-                      </p>
-
-                      {/* Translation */}
-                      <p className="text-sm text-muted-foreground leading-relaxed pl-10">
-                        {translation?.text}
-                      </p>
+                      {group.ayahs.map((ayah) => (
+                        <div key={ayah.number} className="flex gap-3 py-2 border-b border-border/30 last:border-b-0">
+                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">
+                            {ayah.numberInSurah}
+                          </span>
+                          <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+                            {ayah.text}
+                          </p>
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>
-              ))}
+              )}
             </div>
           )}
 
           {/* Bottom navigation */}
-          <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
-            <Button
-              variant="outline"
-              onClick={() => goToPage(page - 1)}
-              disabled={page === 1}
-            >
+          <div className="flex items-center justify-between pt-4 border-t border-border">
+            <Button variant="outline" onClick={() => goToPage(page - 1)} disabled={page === 1}>
               <ChevronLeft className="w-4 h-4 mr-1" />
               Sebelumnya
             </Button>
             <span className="text-sm text-muted-foreground">
               {page} / {TOTAL_PAGES}
             </span>
-            <Button
-              variant="outline"
-              onClick={() => goToPage(page + 1)}
-              disabled={page === TOTAL_PAGES}
-            >
+            <Button variant="outline" onClick={() => goToPage(page + 1)} disabled={page === TOTAL_PAGES}>
               Selanjutnya
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
