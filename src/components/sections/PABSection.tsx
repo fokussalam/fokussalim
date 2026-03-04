@@ -145,7 +145,7 @@ export const PABSection = ({ isAdmin }: { isAdmin: boolean }) => {
 
   return (
     <section className="py-8 px-4 bg-muted/30">
-      <div className="max-w-sm mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-center gap-2 mb-4">
           <h3 className="text-lg font-semibold">Pusat Akses Belajar</h3>
           {isAdmin && (
@@ -161,7 +161,7 @@ export const PABSection = ({ isAdmin }: { isAdmin: boolean }) => {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[1, 2].map(i => (
               <div key={i} className="bg-card rounded-xl p-4 animate-pulse h-24" />
             ))}
@@ -169,7 +169,7 @@ export const PABSection = ({ isAdmin }: { isAdmin: boolean }) => {
         ) : items.length === 0 ? (
           <p className="text-center text-muted-foreground text-sm py-4">Belum ada item</p>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {items.map(item => {
               const Icon = iconMap[item.icon] || BookOpen;
               return (

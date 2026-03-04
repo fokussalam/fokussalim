@@ -101,7 +101,7 @@ const MobileMenu = ({ isOpen, onClose, user }: { isOpen: boolean; onClose: () =>
 // Hero Section
 const HeroSection = () => (
   <section id="beranda" className="pt-24 pb-10 px-4 bg-gradient-to-b from-red-accent/5 to-background">
-    <div className="max-w-sm mx-auto text-center">
+    <div className="max-w-3xl mx-auto text-center">
       <div className="w-24 h-24 mx-auto mb-4">
         <img src={logoSalim} alt="Logo Salim" className="w-full h-full object-contain" />
       </div>
@@ -196,7 +196,7 @@ const ProgramSection = ({
           />
         )}
       </div>
-      <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto">
         {displayPrograms.map((program) => {
           const IconComponent = iconMap[program.icon] || Star;
           return (
@@ -287,7 +287,7 @@ const ScheduleSection = () => {
 
   return (
     <section id="jadwal" className="py-8 px-4 bg-muted/30">
-      <div className="max-w-sm mx-auto">
+      <div className="max-w-4xl mx-auto">
         <h3 className="text-lg font-semibold mb-4 text-center">Jadwal Terdekat</h3>
         
         {loading ? (
@@ -304,7 +304,7 @@ const ScheduleSection = () => {
             Belum ada jadwal kegiatan
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {events.map((event) => (
               <div key={event.id} className="bg-card rounded-lg p-4 border border-border">
                 <div className="flex items-start justify-between gap-3">
@@ -363,7 +363,7 @@ const ContentSection = ({
 
   return (
     <section id="konten" className="py-8 px-4">
-      <div className="max-w-sm mx-auto">
+      <div className="max-w-4xl mx-auto">
         <h3 className="text-lg font-semibold mb-4 text-center">Konten Terbaru</h3>
         
         {/* Quote */}
@@ -769,15 +769,15 @@ const CTASection = ({ isAdmin, whatsappNumber, onRefresh }: { isAdmin: boolean; 
         </Button>
       )}
       
-      <div className="max-w-sm mx-auto text-center">
+      <div className="max-w-4xl mx-auto text-center">
         <h3 className="text-xl font-bold text-primary-foreground mb-2">
           Bergabung Bersama Kami
         </h3>
         <p className="text-primary-foreground/80 text-sm mb-6">
           Jadilah bagian dari komunitas dakwah
         </p>
-        <div className="flex flex-col gap-3">
-          <Button size="lg" variant="secondary" className="w-full" asChild>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button size="lg" variant="secondary" className="w-full sm:w-auto px-8" asChild>
             <Link to="/register">
               Gabung Fokus Salim
             </Link>
@@ -785,7 +785,7 @@ const CTASection = ({ isAdmin, whatsappNumber, onRefresh }: { isAdmin: boolean; 
           <Button 
             size="lg" 
             variant="outline" 
-            className="w-full bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
+            className="w-full sm:w-auto px-8 bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
             asChild
           >
             <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noopener noreferrer">
@@ -898,7 +898,7 @@ const BottomNavBar = ({ user, onSignOut }: { user: any; onSignOut: () => void })
 // Mini Footer
 const MiniFooter = () => (
   <footer className="py-6 px-4 pb-20 bg-card border-t border-border">
-    <div className="max-w-sm mx-auto">
+    <div className="max-w-4xl mx-auto">
       <div className="flex justify-center gap-4 mb-4">
         <a
           href="https://wa.me/6281234567890"
