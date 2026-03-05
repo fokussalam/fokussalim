@@ -93,7 +93,7 @@ export const AppHeader = ({
         {/* Center: Date and Time */}
         <div className="flex-1 flex flex-col items-center justify-center text-center px-2 min-w-0">
           <div className="text-[10px] sm:text-xs font-medium text-foreground truncate">
-            {formatDate(currentTime)} / {formatHijri(currentTime)}
+            {formatDate(currentTime)}
           </div>
           <div className="text-[10px] text-muted-foreground">
             {formatTime(currentTime)}
