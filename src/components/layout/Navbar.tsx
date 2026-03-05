@@ -61,7 +61,7 @@ const Navbar = () => {
     
     const hijriDate = toHijri(date);
     
-    return `${day}, ${dateNum} ${month} ${year} / ${hijriDate} • ${hours}:${minutes}:${seconds} WIB`;
+    return `${day}, ${dateNum} ${month} ${year} • ${hours}:${minutes}:${seconds} WIB`;
   };
 
   const navItems = [
