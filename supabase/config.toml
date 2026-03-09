@@ -1,1 +1,7 @@
 project_id = "gsmorngzczhzcjmgopwd"
+
+[functions.quiz-generator]
+verify_jwt = false
+
+[functions.tajwid-analyze]
+verify_jwt = false

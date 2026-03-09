@@ -167,8 +167,8 @@ export function TajwidReview() {
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center justify-between">
               <span>{selected.santri_name} — QS. {surah?.name}: {selected.ayat_number}</span>
-              <Badge variant={selected.status === "reviewed" ? "default" : "secondary"}>
-                {selected.status === "reviewed" ? "Dinilai" : "Menunggu"}
+              <Badge variant={selected.status === "reviewed" ? "default" : selected.status === "auto_reviewed" ? "outline" : "secondary"}>
+                {selected.status === "reviewed" ? "Dinilai Ustadz" : selected.status === "auto_reviewed" ? "Dinilai AI" : "Menunggu"}
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -310,9 +310,11 @@ export function TajwidReview() {
                     {new Date(sub.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
                   </p>
                 </div>
-                <Badge variant={sub.status === "reviewed" ? "default" : "secondary"}>
+                <Badge variant={sub.status === "reviewed" ? "default" : sub.status === "auto_reviewed" ? "outline" : "secondary"}>
                   {sub.status === "reviewed" ? (
-                    <><CheckCircle className="w-3 h-3 mr-1" /> Dinilai</>
+                    <><CheckCircle className="w-3 h-3 mr-1" /> Dinilai Ustadz</>
+                  ) : sub.status === "auto_reviewed" ? (
+                    <><CheckCircle className="w-3 h-3 mr-1" /> Dinilai AI</>
                   ) : (
                     <><Clock className="w-3 h-3 mr-1" /> Menunggu</>
                   )}

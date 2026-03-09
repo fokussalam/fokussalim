@@ -118,7 +118,7 @@ export function TajwidSubmissionForm({ onSubmitted }: Props) {
         audioUrl = urlData.publicUrl;
       }
 
-      const { error } = await supabase.from("tajwid_submissions" as any).insert({
+      const { data: insertedData, error } = await supabase.from("tajwid_submissions" as any).insert({
         user_id: user.id,
         santri_name: santriName.trim(),
         surah_number: Number(surahNumber),
@@ -126,10 +126,31 @@ export function TajwidSubmissionForm({ onSubmitted }: Props) {
         ayat_text: ayatText || null,
         audio_url: audioUrl,
         status: "pending",
-      });
+      }).select("id").single();
 
       if (error) throw error;
-      toast.success("Bacaan berhasil dikirim!");
+
+      toast.success("Bacaan berhasil dikirim! Menganalisis tajwid...");
+
+      // Trigger AI analysis in background
+      const submissionId = (insertedData as any).id;
+      supabase.functions.invoke("tajwid-analyze", {
+        body: {
+          submission_id: submissionId,
+          surah_number: Number(surahNumber),
+          ayat_number: Number(ayatNumber),
+          ayat_text: ayatText,
+        },
+      }).then(({ error: aiError }) => {
+        if (aiError) {
+          console.error("AI analysis error:", aiError);
+          toast.error("Analisis AI gagal. Ustadz akan mengoreksi manual.");
+        } else {
+          toast.success("Analisis tajwid otomatis selesai!");
+        }
+        onSubmitted();
+      });
+
       setSurahNumber("");
       setAyatNumber("");
       setAudioFile(null);
