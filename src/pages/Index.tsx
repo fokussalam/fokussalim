@@ -1014,14 +1014,23 @@ const Index = () => {
         <MiniFooter />
         <BottomNavBar user={user} onSignOut={handleSignOut} />
         
-        {/* FAB Bedah Tajwid */}
-        <Link
-          to="/bedah-tajwid"
-          className="fixed bottom-20 right-4 z-40 bg-primary text-primary-foreground shadow-lg rounded-full px-5 py-3 flex items-center gap-2 hover:bg-primary/90 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 font-semibold text-sm"
-        >
-          <BookOpen className="w-4 h-4" />
-          Bedah Tajwid
-        </Link>
+        {/* FAB Bedah Tajwid & I'rab */}
+        <div className="fixed bottom-20 right-4 z-40 flex flex-col gap-2 items-end">
+          <Link
+            to="/bedah-irab"
+            className="bg-accent text-accent-foreground shadow-lg rounded-full px-5 py-3 flex items-center gap-2 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 font-semibold text-sm"
+          >
+            <BookOpen className="w-4 h-4" />
+            Bedah I'rab
+          </Link>
+          <Link
+            to="/bedah-tajwid"
+            className="bg-primary text-primary-foreground shadow-lg rounded-full px-5 py-3 flex items-center gap-2 hover:bg-primary/90 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 font-semibold text-sm"
+          >
+            <BookOpen className="w-4 h-4" />
+            Bedah Tajwid
+          </Link>
+        </div>
       </div>
     </>
   );
