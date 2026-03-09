@@ -158,20 +158,41 @@ export function TajwidSubmissionForm({ onSubmitted }: Props) {
           )}
 
           <div className="space-y-2">
-            <Label>Upload Audio Bacaan</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                type="file"
-                accept="audio/*"
-                onChange={e => setAudioFile(e.target.files?.[0] || null)}
-                className="flex-1"
-              />
-              {audioFile && (
-                <span className="text-xs text-muted-foreground truncate max-w-[120px]">
-                  {audioFile.name}
-                </span>
-              )}
+            <Label>Audio Bacaan</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={isRecording ? "destructive" : "outline"}
+                className="gap-2 flex-1"
+                onClick={isRecording ? stopRecording : startRecording}
+              >
+                {isRecording ? (
+                  <><Square className="w-4 h-4" /> Stop ({formatTime(recordingTime)})</>
+                ) : (
+                  <><Mic className="w-4 h-4" /> Rekam</>
+                )}
+              </Button>
+              <label className="flex-1">
+                <input
+                  type="file"
+                  accept="audio/*"
+                  className="hidden"
+                  onChange={e => { setAudioFile(e.target.files?.[0] || null); }}
+                />
+                <div className="flex items-center justify-center gap-2 h-10 px-4 rounded-md border border-input bg-background text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors">
+                  <FileAudio className="w-4 h-4" /> Pilih File
+                </div>
+              </label>
             </div>
+            {audioFile && (
+              <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                <FileAudio className="w-4 h-4 text-primary shrink-0" />
+                <span className="text-sm text-foreground truncate flex-1">{audioFile.name}</span>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setAudioFile(null)} className="text-xs h-7 px-2">
+                  Hapus
+                </Button>
+              </div>
+            )}
           </div>
 
           <Button type="submit" disabled={loading} className="w-full">
