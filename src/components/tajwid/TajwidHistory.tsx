@@ -90,7 +90,7 @@ export function TajwidHistory({ refreshKey }: Props) {
                   {sub.status === "reviewed" ? (
                     <><CheckCircle className="w-3 h-3 mr-1" /> Dinilai Ustadz</>
                   ) : sub.status === "auto_reviewed" ? (
-                    <><CheckCircle className="w-3 h-3 mr-1" /> Dinilai AI</>
+                    <><CheckCircle className="w-3 h-3 mr-1" /> Dinilai oleh Adin, M.Pd</>
                   ) : (
                     <><Clock className="w-3 h-3 mr-1" /> Menunggu</>
                   )}
