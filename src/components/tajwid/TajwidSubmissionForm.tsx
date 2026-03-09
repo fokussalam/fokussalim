@@ -25,6 +25,11 @@ export function TajwidSubmissionForm({ onSubmitted }: Props) {
   const [ayatText, setAyatText] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetchingAyat, setFetchingAyat] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (profile?.full_name) setSantriName(profile.full_name);
