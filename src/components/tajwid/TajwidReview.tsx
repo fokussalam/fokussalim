@@ -168,7 +168,7 @@ export function TajwidReview() {
             <CardTitle className="text-base flex items-center justify-between">
               <span>{selected.santri_name} — QS. {surah?.name}: {selected.ayat_number}</span>
               <Badge variant={selected.status === "reviewed" ? "default" : selected.status === "auto_reviewed" ? "outline" : "secondary"}>
-                {selected.status === "reviewed" ? "Dinilai Ustadz" : selected.status === "auto_reviewed" ? "Dinilai AI" : "Menunggu"}
+                {selected.status === "reviewed" ? "Dinilai Ustadz" : selected.status === "auto_reviewed" ? "Dinilai oleh Adin, M.Pd" : "Menunggu"}
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -314,7 +314,7 @@ export function TajwidReview() {
                   {sub.status === "reviewed" ? (
                     <><CheckCircle className="w-3 h-3 mr-1" /> Dinilai Ustadz</>
                   ) : sub.status === "auto_reviewed" ? (
-                    <><CheckCircle className="w-3 h-3 mr-1" /> Dinilai AI</>
+                    <><CheckCircle className="w-3 h-3 mr-1" /> Dinilai oleh Adin, M.Pd</>
                   ) : (
                     <><Clock className="w-3 h-3 mr-1" /> Menunggu</>
                   )}
