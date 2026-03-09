@@ -77,8 +77,8 @@ export function TajwidDetail({ submission, onBack }: Props) {
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center justify-between">
             <span>QS. {surah?.name}: {submission.ayat_number}</span>
-            <Badge variant={submission.status === "reviewed" ? "default" : "secondary"}>
-              {submission.status === "reviewed" ? "Dinilai" : "Menunggu"}
+            <Badge variant={submission.status === "reviewed" ? "default" : submission.status === "auto_reviewed" ? "outline" : "secondary"}>
+              {submission.status === "reviewed" ? "Dinilai Ustadz" : submission.status === "auto_reviewed" ? "Dinilai AI" : "Menunggu"}
             </Badge>
           </CardTitle>
         </CardHeader>
