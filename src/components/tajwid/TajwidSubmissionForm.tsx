@@ -98,7 +98,6 @@ export function TajwidSubmissionForm({ onSubmitted }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) { toast.error("Silakan login terlebih dahulu"); return; }
     if (!santriName.trim() || !surahNumber || !ayatNumber) {
       toast.error("Lengkapi semua field yang wajib diisi");
       return;
@@ -108,8 +107,9 @@ export function TajwidSubmissionForm({ onSubmitted }: Props) {
     try {
       let audioUrl: string | null = null;
       if (audioFile) {
+        const folder = user ? user.id : "public";
         const ext = audioFile.name.split(".").pop();
-        const path = `${user.id}/${Date.now()}.${ext}`;
+        const path = `${folder}/${Date.now()}.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from("tajwid-audio")
           .upload(path, audioFile);
@@ -119,7 +119,7 @@ export function TajwidSubmissionForm({ onSubmitted }: Props) {
       }
 
       const { data: insertedData, error } = await supabase.from("tajwid_submissions" as any).insert({
-        user_id: user.id,
+        user_id: user?.id || null,
         santri_name: santriName.trim(),
         surah_number: Number(surahNumber),
         ayat_number: Number(ayatNumber),
