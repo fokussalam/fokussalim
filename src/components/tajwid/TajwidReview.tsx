@@ -167,8 +167,8 @@ export function TajwidReview() {
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center justify-between">
               <span>{selected.santri_name} — QS. {surah?.name}: {selected.ayat_number}</span>
-              <Badge variant={selected.status === "reviewed" ? "default" : "secondary"}>
-                {selected.status === "reviewed" ? "Dinilai" : "Menunggu"}
+              <Badge variant={selected.status === "reviewed" ? "default" : selected.status === "auto_reviewed" ? "outline" : "secondary"}>
+                {selected.status === "reviewed" ? "Dinilai Ustadz" : selected.status === "auto_reviewed" ? "Dinilai AI" : "Menunggu"}
               </Badge>
             </CardTitle>
           </CardHeader>
