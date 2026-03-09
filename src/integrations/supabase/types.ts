@@ -489,6 +489,127 @@ export type Database = {
         }
         Relationships: []
       }
+      tajwid_analysis_items: {
+        Row: {
+          catatan: string | null
+          created_at: string
+          hukum_tajwid: string
+          id: string
+          sort_order: number
+          submission_id: string
+          word: string
+        }
+        Insert: {
+          catatan?: string | null
+          created_at?: string
+          hukum_tajwid: string
+          id?: string
+          sort_order?: number
+          submission_id: string
+          word: string
+        }
+        Update: {
+          catatan?: string | null
+          created_at?: string
+          hukum_tajwid?: string
+          id?: string
+          sort_order?: number
+          submission_id?: string
+          word?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tajwid_analysis_items_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "tajwid_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tajwid_assessments: {
+        Row: {
+          assessed_by: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          kelancaran_score: number
+          makhraj_score: number
+          submission_id: string
+          tajwid_score: number
+          updated_at: string
+        }
+        Insert: {
+          assessed_by?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          kelancaran_score?: number
+          makhraj_score?: number
+          submission_id: string
+          tajwid_score?: number
+          updated_at?: string
+        }
+        Update: {
+          assessed_by?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          kelancaran_score?: number
+          makhraj_score?: number
+          submission_id?: string
+          tajwid_score?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tajwid_assessments_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "tajwid_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tajwid_submissions: {
+        Row: {
+          audio_url: string | null
+          ayat_number: number
+          ayat_text: string | null
+          created_at: string
+          id: string
+          santri_name: string
+          status: string
+          surah_number: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          ayat_number: number
+          ayat_text?: string | null
+          created_at?: string
+          id?: string
+          santri_name: string
+          status?: string
+          surah_number: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          ayat_number?: number
+          ayat_text?: string | null
+          created_at?: string
+          id?: string
+          santri_name?: string
+          status?: string
+          surah_number?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
