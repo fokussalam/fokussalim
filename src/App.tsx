@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Mushaf from "./pages/Mushaf";
 import Murotal from "./pages/Murotal";
+import BedahTajwid from "./pages/BedahTajwid";
 import Dashboard from "./pages/Dashboard";
 import Anggota from "./pages/dashboard/Anggota";
 import Kegiatan from "./pages/dashboard/Kegiatan";
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/mushaf" element={<Mushaf />} />
               <Route path="/murotal" element={<Murotal />} />
+              <Route path="/bedah-tajwid" element={<BedahTajwid />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route
