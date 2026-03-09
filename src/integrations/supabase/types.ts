@@ -164,6 +164,118 @@ export type Database = {
         }
         Relationships: []
       }
+      irab_analysis_items: {
+        Row: {
+          created_at: string
+          explanation: string | null
+          id: string
+          irab_position: string
+          irab_sign: string
+          sort_order: number
+          submission_id: string
+          word: string
+          word_type: string
+        }
+        Insert: {
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          irab_position: string
+          irab_sign: string
+          sort_order?: number
+          submission_id: string
+          word: string
+          word_type: string
+        }
+        Update: {
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          irab_position?: string
+          irab_sign?: string
+          sort_order?: number
+          submission_id?: string
+          word?: string
+          word_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "irab_analysis_items_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "irab_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      irab_assessments: {
+        Row: {
+          assessed_by: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          submission_id: string
+          updated_at: string
+        }
+        Insert: {
+          assessed_by?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          submission_id: string
+          updated_at?: string
+        }
+        Update: {
+          assessed_by?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          submission_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "irab_assessments_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: true
+            referencedRelation: "irab_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      irab_submissions: {
+        Row: {
+          arabic_text: string
+          created_at: string
+          id: string
+          sentence_type: string | null
+          status: string
+          student_name: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          arabic_text: string
+          created_at?: string
+          id?: string
+          sentence_type?: string | null
+          status?: string
+          student_name: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          arabic_text?: string
+          created_at?: string
+          id?: string
+          sentence_type?: string | null
+          status?: string
+          student_name?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       monthly_dues: {
         Row: {
           amount: number
