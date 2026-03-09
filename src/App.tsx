@@ -12,6 +12,7 @@ import Register from "./pages/Register";
 import Mushaf from "./pages/Mushaf";
 import Murotal from "./pages/Murotal";
 import BedahTajwid from "./pages/BedahTajwid";
+import BedahIrab from "./pages/BedahIrab";
 import Dashboard from "./pages/Dashboard";
 import Anggota from "./pages/dashboard/Anggota";
 import Kegiatan from "./pages/dashboard/Kegiatan";
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/mushaf" element={<Mushaf />} />
               <Route path="/murotal" element={<Murotal />} />
               <Route path="/bedah-tajwid" element={<BedahTajwid />} />
+              <Route path="/bedah-irab" element={<BedahIrab />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route
