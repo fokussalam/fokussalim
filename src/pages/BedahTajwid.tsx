@@ -15,6 +15,10 @@ const BedahTajwid = () => {
   const { isAdminOrPengurus } = useUserRole();
   const [refreshKey, setRefreshKey] = useState(0);
 
+  const showHistory = !!user;
+  const showReview = isAdminOrPengurus;
+  const tabCount = 1 + (showHistory ? 1 : 0) + (showReview ? 1 : 0);
+
   return (
     <>
       <Helmet>
@@ -37,46 +41,39 @@ const BedahTajwid = () => {
         </header>
 
         <main className="container mx-auto px-4 py-6 max-w-2xl">
-          {!user ? (
-            <div className="text-center py-16">
-              <BookOpen className="w-16 h-16 mx-auto text-primary mb-4" />
-              <h2 className="text-xl font-bold text-foreground mb-2">Login untuk Mulai</h2>
-              <p className="text-muted-foreground mb-4">Silakan login untuk mengirim bacaan dan melihat riwayat bedah tajwid.</p>
-              <Link to="/login">
-                <Button>Login</Button>
-              </Link>
-            </div>
-          ) : (
-            <Tabs defaultValue="submit" className="space-y-4">
-              <TabsList className={`grid w-full ${isAdminOrPengurus ? "grid-cols-3" : "grid-cols-2"}`}>
-                <TabsTrigger value="submit" className="gap-1.5 text-xs sm:text-sm">
-                  <Send className="w-3.5 h-3.5" /> Kirim
-                </TabsTrigger>
+          <Tabs defaultValue="submit" className="space-y-4">
+            <TabsList className={`grid w-full grid-cols-${tabCount}`}>
+              <TabsTrigger value="submit" className="gap-1.5 text-xs sm:text-sm">
+                <Send className="w-3.5 h-3.5" /> Kirim
+              </TabsTrigger>
+              {showHistory && (
                 <TabsTrigger value="history" className="gap-1.5 text-xs sm:text-sm">
                   <History className="w-3.5 h-3.5" /> Riwayat
                 </TabsTrigger>
-                {isAdminOrPengurus && (
-                  <TabsTrigger value="review" className="gap-1.5 text-xs sm:text-sm">
-                    <ClipboardCheck className="w-3.5 h-3.5" /> Review
-                  </TabsTrigger>
-                )}
-              </TabsList>
+              )}
+              {showReview && (
+                <TabsTrigger value="review" className="gap-1.5 text-xs sm:text-sm">
+                  <ClipboardCheck className="w-3.5 h-3.5" /> Review
+                </TabsTrigger>
+              )}
+            </TabsList>
 
-              <TabsContent value="submit">
-                <TajwidSubmissionForm onSubmitted={() => setRefreshKey(k => k + 1)} />
-              </TabsContent>
+            <TabsContent value="submit">
+              <TajwidSubmissionForm onSubmitted={() => setRefreshKey(k => k + 1)} />
+            </TabsContent>
 
+            {showHistory && (
               <TabsContent value="history">
                 <TajwidHistory refreshKey={refreshKey} />
               </TabsContent>
+            )}
 
-              {isAdminOrPengurus && (
-                <TabsContent value="review">
-                  <TajwidReview />
-                </TabsContent>
-              )}
-            </Tabs>
-          )}
+            {showReview && (
+              <TabsContent value="review">
+                <TajwidReview />
+              </TabsContent>
+            )}
+          </Tabs>
         </main>
       </div>
     </>
