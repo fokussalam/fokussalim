@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, Loader2, Send } from "lucide-react";
+import { Mic, Square, Loader2, Send, FileAudio } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
