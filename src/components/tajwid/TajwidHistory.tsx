@@ -86,9 +86,11 @@ export function TajwidHistory({ refreshKey }: Props) {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant={sub.status === "reviewed" ? "default" : "secondary"}>
+                <Badge variant={sub.status === "reviewed" ? "default" : sub.status === "auto_reviewed" ? "outline" : "secondary"}>
                   {sub.status === "reviewed" ? (
-                    <><CheckCircle className="w-3 h-3 mr-1" /> Dinilai</>
+                    <><CheckCircle className="w-3 h-3 mr-1" /> Dinilai Ustadz</>
+                  ) : sub.status === "auto_reviewed" ? (
+                    <><CheckCircle className="w-3 h-3 mr-1" /> Dinilai AI</>
                   ) : (
                     <><Clock className="w-3 h-3 mr-1" /> Menunggu</>
                   )}
