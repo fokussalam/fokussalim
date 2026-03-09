@@ -310,9 +310,11 @@ export function TajwidReview() {
                     {new Date(sub.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
                   </p>
                 </div>
-                <Badge variant={sub.status === "reviewed" ? "default" : "secondary"}>
+                <Badge variant={sub.status === "reviewed" ? "default" : sub.status === "auto_reviewed" ? "outline" : "secondary"}>
                   {sub.status === "reviewed" ? (
-                    <><CheckCircle className="w-3 h-3 mr-1" /> Dinilai</>
+                    <><CheckCircle className="w-3 h-3 mr-1" /> Dinilai Ustadz</>
+                  ) : sub.status === "auto_reviewed" ? (
+                    <><CheckCircle className="w-3 h-3 mr-1" /> Dinilai AI</>
                   ) : (
                     <><Clock className="w-3 h-3 mr-1" /> Menunggu</>
                   )}
