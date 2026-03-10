@@ -7,9 +7,34 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mic, Square, Loader2, Send, FileAudio } from "lucide-react";
+import { Mic, Square, Loader2, Send, FileAudio, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+
+interface AnalysisResult {
+  submission: {
+    id: string;
+    surah_number: number;
+    ayat_number: number;
+    ayat_text: string | null;
+    audio_url: string | null;
+    status: string;
+  };
+  analysisItems: Array<{
+    word: string;
+    hukum_tajwid: string;
+    catatan: string | null;
+  }>;
+  assessment: {
+    makhraj_score: number;
+    tajwid_score: number;
+    kelancaran_score: number;
+    comment: string | null;
+  } | null;
+}
 
 interface Props {
   onSubmitted: () => void;
@@ -24,9 +49,11 @@ export function TajwidSubmissionForm({ onSubmitted }: Props) {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [ayatText, setAyatText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const [fetchingAyat, setFetchingAyat] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -96,6 +123,12 @@ export function TajwidSubmissionForm({ onSubmitted }: Props) {
     fetchAyat();
   }, [surahNumber, ayatNumber]);
 
+  const scoreColor = (score: number) => {
+    if (score >= 80) return "text-green-600";
+    if (score >= 60) return "text-yellow-600";
+    return "text-red-600";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!santriName.trim() || !surahNumber || !ayatNumber) {
@@ -104,6 +137,7 @@ export function TajwidSubmissionForm({ onSubmitted }: Props) {
     }
 
     setLoading(true);
+    setResult(null);
     try {
       let audioUrl: string | null = null;
       if (audioFile) {
@@ -131,37 +165,178 @@ export function TajwidSubmissionForm({ onSubmitted }: Props) {
       if (error) throw error;
 
       toast.success("Bacaan berhasil dikirim! Menganalisis tajwid...");
+      setLoading(false);
+      setAnalyzing(true);
 
-      // Trigger AI analysis in background
       const submissionId = (insertedData as any).id;
-      supabase.functions.invoke("tajwid-analyze", {
+      const { error: aiError } = await supabase.functions.invoke("tajwid-analyze", {
         body: {
           submission_id: submissionId,
           surah_number: Number(surahNumber),
           ayat_number: Number(ayatNumber),
           ayat_text: ayatText,
         },
-      }).then(({ error: aiError }) => {
-        if (aiError) {
-          console.error("AI analysis error:", aiError);
-          toast.error("Analisis AI gagal. Ustadz akan mengoreksi manual.");
-        } else {
-          toast.success("Analisis tajwid otomatis selesai!");
-        }
-        onSubmitted();
       });
 
-      setSurahNumber("");
-      setAyatNumber("");
-      setAudioFile(null);
-      setAyatText("");
+      if (aiError) {
+        console.error("AI analysis error:", aiError);
+        toast.error("Analisis AI gagal. Ustadz akan mengoreksi manual.");
+        setAnalyzing(false);
+        onSubmitted();
+        return;
+      }
+
+      // Fetch the results
+      const [analysisRes, assessmentRes] = await Promise.all([
+        supabase.from("tajwid_analysis_items" as any).select("*").eq("submission_id", submissionId).order("sort_order"),
+        supabase.from("tajwid_assessments" as any).select("*").eq("submission_id", submissionId).maybeSingle(),
+      ]);
+
+      setResult({
+        submission: {
+          id: submissionId,
+          surah_number: Number(surahNumber),
+          ayat_number: Number(ayatNumber),
+          ayat_text: ayatText || null,
+          audio_url: audioUrl,
+          status: "auto_reviewed",
+        },
+        analysisItems: (analysisRes.data as any) || [],
+        assessment: (assessmentRes.data as any) || null,
+      });
+
+      toast.success("Analisis tajwid otomatis selesai!");
+      setAnalyzing(false);
       onSubmitted();
     } catch (err: any) {
       toast.error(err.message || "Gagal mengirim bacaan");
-    } finally {
       setLoading(false);
+      setAnalyzing(false);
     }
   };
+
+  const handleReset = () => {
+    setResult(null);
+    setSurahNumber("");
+    setAyatNumber("");
+    setAudioFile(null);
+    setAyatText("");
+  };
+
+  // Show result view
+  if (result) {
+    const surah = surahList.find(s => s.number === result.submission.surah_number);
+    return (
+      <div className="space-y-4">
+        {/* Ayat */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center justify-between">
+              <span>QS. {surah?.name}: {result.submission.ayat_number}</span>
+              <Badge variant="outline">Dinilai oleh Adin, M.Pd</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {result.submission.ayat_text && (
+              <p className="text-2xl font-arabic leading-loose text-foreground text-center mb-4" dir="rtl">
+                {result.submission.ayat_text}
+              </p>
+            )}
+            {result.submission.audio_url && (
+              <audio controls className="w-full" src={result.submission.audio_url}>
+                Browser tidak mendukung audio.
+              </audio>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Analysis Table */}
+        {result.analysisItems.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Analisis Tajwid</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Kata</TableHead>
+                    <TableHead>Hukum Tajwid</TableHead>
+                    <TableHead>Catatan</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {result.analysisItems.map((item, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="font-arabic text-lg" dir="rtl">{item.word}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{item.hukum_tajwid}</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{item.catatan || "-"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Assessment */}
+        {result.assessment && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                Penilaian
+                <Badge variant="outline" className="text-xs font-normal">Otomatis AI</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                {[
+                  { label: "Makhraj", score: result.assessment.makhraj_score },
+                  { label: "Tajwid", score: result.assessment.tajwid_score },
+                  { label: "Kelancaran", score: result.assessment.kelancaran_score },
+                ].map(({ label, score }) => (
+                  <div key={label}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-muted-foreground">{label}</span>
+                      <span className={`font-bold ${scoreColor(score)}`}>{score}/100</span>
+                    </div>
+                    <Progress value={score} className="h-2" />
+                  </div>
+                ))}
+              </div>
+              {result.assessment.comment && (
+                <div className="mt-4 p-3 bg-muted rounded-lg">
+                  <p className="text-sm font-medium mb-1">Komentar:</p>
+                  <p className="text-sm text-muted-foreground">{result.assessment.comment}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        <Button onClick={handleReset} variant="outline" className="w-full gap-2">
+          <RotateCcw className="w-4 h-4" /> Kirim Bacaan Baru
+        </Button>
+      </div>
+    );
+  }
+
+  // Show analyzing state
+  if (analyzing) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+          <div>
+            <p className="font-semibold text-foreground">Menganalisis tajwid...</p>
+            <p className="text-sm text-muted-foreground mt-1">Mohon tunggu, AI sedang menganalisis bacaan Anda</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
